@@ -1,0 +1,112 @@
+\section{Introduction}
+\label{intro}
+NuCypher KMS~\cite{egorov2017nucypher} is a decentralized key management 
+system, encryption, and access control service. It uses proxy re-encryption, namely, the 
+Umbral  scheme~\cite{umbral2018}, to delegate access to encrypted 
+documents through a public network. This network is composed of a set of semi-trusted 
+re-encryption servers, or Ursulas, that implement access control policies created by data 
+owners, or Alices. Alice supplies each Ursula with re-encryption keys allowing Ursula to transform 
+a ciphertext encrypted under Alice's public key into a ciphertext under the delegatee's, or Bob's,  
+public key. This enables the latter to decrypt the data without revealing anything about the 
+encryption keys or the raw data to the intermediate servers.
+
+
+Joining the NuCypher network is governed by consensus rules defining the service setup 
+and the monetary incentives paid to provide the service. In order to join the 
+system, an Ursula needs to stake an amount of NU tokens for a specific period 
+and will be released when the pre-specified staking period is over. Alice chooses an  
+Ursula to hold an access control policy with a probability proportional to the stake this Ursula 
+pledged in the system. As such, the stake value influences the amount of service load Ursula 
+may receive. This stake is also used to punish Ursula financially, by revoking part 
+of it, when cheating is detected. 
+
+
+Alice joins the network by creating a policy to be implemented by a 
+set of Ursulas. This policy specifies the re-encryption key fragments each Ursula will
+need to answer requests coming from Bob(s), as well as the duration of the policy, which 
+is basically the timeframe curing which Bob is authorized to access Alice's data.  Furthermore, 
+Alice will lock an amount of Ether into the policy to be used to pay Ursula for the re-encryption 
+service. As noted, Alice is not exposed to the NU token. All what she needs is an Ethereum 
+wallet, being aware of the NuCypher network architecture to select Ursulas, and knowing the 
+NuCypher rules of preparing access control policies.
+
+
+Bob, on the other hand, does not deal with currency in the system. It interacts with the storage 
+network to retrieve the encrypted data, and with Ursulas in the NuCypher network to ask for the  
+re-encryption service.
+
+
+\subsection{Monetary Incentives in the NuCypher KMS Network}
+Ursulas are rewarded for the re-encryption service by using two sources; 
+the first is the service fees collected from the policy or data 
+owner Alice, while the second is an inflation rewards, i.e., newly minted 
+NU tokens, coming from the NuCypher network. The latter will be provided during the 
+early stage of the network operation to encourage 
+adoption. It is expected that these rewards will disappear as the token cap is 
+reached, much similar to other cryptocurrencies out there.
+
+
+Currently, the inflation rewards are computed for each Ursula based on the number of 
+active policies it holds conditioned on being online during the period of each of these 
+policies. Confirming the status of being online is done by having each Ursula call a 
+simple function in one of the NuCypher contracts to signal that she is around. 
+
+
+Same for the fees, Ursula will collect some of the Ether locked by Alice at the end 
+of the policy duration given that this Ursula stays online for the whole duration. 
+Again, the latter is tracked by watching the confirm activity function calls Ursula 
+make during the policy period.
+
+
+\subsection{Problems with Current Reward Computation Approach}
+The current approach of computing Ursula's rewards suffers from two 
+main problems: 
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\item The rewards computation is agnostic to the number of 
+requests Ursula serves. Thus an active Ursula who may serve a huge number of 
+requests, and an idle one who does not receive any requests (or a 
+malicious Ursula that does not answer the requests she receives from Bob), will 
+both collect the same rewards if they hold identical policies.
+
+\item Confirming being online is flawed in the sense that this function does 
+not require any input or proofs from Ursula on providing the service. Ursula 
+an stay offline offline, not answering any Bob, and be online just to call the confirm activity 
+function. This allows Ursula to collect both inflation rewards 
+and fees without doing anything, and even worse, it will be able to get her stake back at 
+the end of a policy duration.
+\end{itemize}
+
+
+\subsection{Proposed Solutions}
+We need a provably secure mechanism to be used by Ursula to report the 
+number of distinct Bob requests it handled during a specific period, and use this number 
+to compute the fees to be collected from Alice. Thus, we call this confirm 
+service activity, as opposed to confirm activity that refers to solely being available 
+online.
+
+
+Although we can use the number of served requests to compute the inflation 
+rewards as well, this will encourage Ursula to collude with Bob to issue large 
+number of requests. Even it may encourage Ursula to deploy its own Alice(s) 
+and Bob(s) to increase the demand, and thus, the cut of the inflation rewards.
+
+
+In this document, we introduce several solutions for confirming service activity. 
+These solutions differ in the trust, efficiency, interactivity, and resource 
+requirements, in addition to their security guarantees. We present each of these 
+solution, where one of them is still a work in progress, discuss the aforementioned 
+trade-offs and requirements of each of them, with the goal of selecting one of these 
+solutions to be adopted in the NuCypher network.
+
+
+\subsection{Roadmap}
+The rest of this document is organized as follows. Section~\ref{threat-network-model} 
+outlines the network and threat models adopted by the proposed solutions. 
+Section~\ref{prelim} provides an overview of the underlying cryptographic primitives and 
+protocols, while the proposed solutions are presented 
+in Section~\ref{solutions} with their security and efficiency aspects analyzed in 
+Section~\ref{analysis}. Lastly, directions of future work on the confirm activity issue 
+are outlined in Section~\ref{future-work}.
+
+
