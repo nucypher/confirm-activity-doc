@@ -46,16 +46,10 @@ adoption. It is expected that these rewards will disappear as the token cap is
 reached, much similar to other cryptocurrencies out there.
 
 
-Currently, the inflation rewards are computed for each Ursula based on the number of 
-active policies it holds conditioned on being online during the period of each of these 
-policies. Confirming the status of being online is done by having each Ursula call a 
+Currently, the inflation rewards are computed for each Ursula based on the size of their stake, and their confirmation that they are online, once per period. Confirming the status of being online is done by having each Ursula call a 
 simple function in one of the NuCypher contracts to signal that she is around. 
 
-
-Same for the fees, Ursula will collect some of the Ether locked by Alice at the end 
-of the policy duration given that this Ursula stays online for the whole duration. 
-Again, the latter is tracked by watching the confirm activity function calls Ursula 
-make during the policy period.
+As for fees, Ursula collects the Ether locked by Alice during the policy's duration in proportion to the number of periods up to that point in which Ursula has confirmed their online status. 
 
 
 \subsection{Problems with Current Reward Computation Approach}
@@ -71,10 +65,9 @@ both collect the same rewards if they hold identical policies.
 
 \item Confirming being online is flawed in the sense that this function does 
 not require any input or proofs from Ursula on providing the service. Ursula 
-an stay offline offline, not answering any Bob, and be online just to call the confirm activity 
+can stay offline, not answering any Bob, and be online just to call the confirm activity 
 function. This allows Ursula to collect both inflation rewards 
-and fees without doing anything, and even worse, it will be able to get her stake back at 
-the end of a policy duration.
+and fees without doing anything, and even worse, it will be able to get her stake back once it unlocks (policies being managed by Ursula will have expired by this point). 
 \end{itemize}
 
 
@@ -88,7 +81,7 @@ online.
 
 Although we can use the number of served requests to compute the inflation 
 rewards as well, this will encourage Ursula to collude with Bob to issue large 
-number of requests. Even it may encourage Ursula to deploy its own Alice(s) 
+number of requests. If inflation rewards were to be distributed based on the earning of fees (which is desirable, as it would link node subsidization more closely with the network service), this might encourage Ursula to deploy its own Alice(s) 
 and Bob(s) to increase the demand, and thus, the cut of the inflation rewards.
 
 
