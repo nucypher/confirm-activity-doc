@@ -6,17 +6,17 @@ Umbral  scheme~\cite{umbral2018}, to delegate access to encrypted
 documents through a public network. This network is composed of a set of semi-trusted 
 re-encryption servers, or Ursulas, that implement access control policies created by data 
 owners, or Alices. Alice supplies each Ursula with re-encryption keys allowing Ursula to transform 
-a ciphertext encrypted under Alice's public key into a ciphertext decryptable by the delegatee's, or Bob's,  
-public key. This enables the latter to decrypt the data without revealing anything about the 
+ciphertext encrypted under Alice's public key into ciphertext encrypted under the delegatee's, or Bob's,
+public key. This enables the latter to decrypt the data without revealing anything about the
 decryption keys or the raw data to the intermediate servers.
 
 
-Joining the NuCypher network is governed by consensus rules defining the service setup 
+Joining the NuCypher network is governed by consensus rules defining the service setup
 and the monetary incentives paid to provide the service. In order to join the 
-system, an Ursula needs to stake an amount of NU tokens for a specific period 
-and will be released when the pre-specified staking period is over. Alice chooses an  
+system, Ursula needs to stake an amount of NU tokens for a specific period
+which will be released when the pre-specified staking period is over. Alice chooses an
 Ursula to hold an access control policy with a probability proportional to the stake this Ursula 
-pledged in the system. As such, the stake value influences the amount of service load Ursula 
+pledged in the system. As such, the stake value influences the amount of service load an Ursula
 may receive. This stake is also used to punish Ursula financially, by revoking part 
 of it, when cheating is detected. 
 
@@ -24,49 +24,47 @@ of it, when cheating is detected.
 Alice joins the network by creating a policy to be implemented by a 
 set of Ursulas. This policy specifies the re-encryption key fragments each Ursula will
 need to answer requests coming from Bob(s), as well as the duration of the policy, which 
-is basically the timeframe curing which Bob is authorized to access Alice's data.  Furthermore, 
+is basically the timeframe during which Bob is authorized to access Alice's data.  Furthermore,
 Alice will lock an amount of Ether into the policy to be used to pay Ursulas for the re-encryption 
-service. As noted, Alice is not exposed to the NU token. All what she needs is an Ethereum 
-wallet, being aware of the NuCypher network architecture to select Ursulas, and knowing the 
+service. As noted, Alice is not exposed to the NU token. All that she needs is an Ethereum
+wallet, awareness of the NuCypher network architecture to select Ursulas, and knowledge of the
 NuCypher rules of preparing access control policies.
 
 
 Bob, on the other hand, does not deal with currency in the system. It interacts with the storage 
-network to retrieve the encrypted data, and with Ursulas in the NuCypher network to ask for the  
+network to retrieve the encrypted data, and with Ursulas in the NuCypher network to request the
 re-encryption service.
 
 
 \subsection{Monetary Incentives in the NuCypher Network}
 Ursulas are rewarded for the re-encryption service by using two sources; 
 the first is the service fees collected from the policy or data 
-owner Alice, while the second is an inflation rewards, i.e., newly minted 
+owner Alice, while the second is inflation rewards, i.e., newly minted
 NU tokens, coming from the NuCypher network. The latter will be provided during the 
 early stage of the network operation to encourage 
 adoption. It is expected that these rewards will disappear as the token cap is 
-reached, much similar to other cryptocurrencies out there.
+reached, similar to other cryptocurrencies out there.
 
 
 Currently, the inflation rewards are computed for each Ursula based on the size of their stake, and their confirmation that they are online, once per period. Confirming the status of being online is done by having each Ursula call a 
-simple function in one of the NuCypher contracts to signal that she is around. 
+simple function in one of the NuCypher contracts to signal that she is online.
 
 As for fees, Ursula collects the Ether locked by Alice during the policy's duration in proportion to the number of periods up to that point in which Ursula has confirmed their online status. 
 
 
 \subsection{Problems with Current Reward Computation Approach}
-The current approach of computing Ursula's rewards suffers from two 
-main problems: 
-\david{It's important to clarify here if we're talking about inflation rewards, service fees, or both.}
+The current approach of computing Ursula's inflation rewards and service fees suffers from two
+main problems:
 \begin{itemize}
 \setlength{\itemsep}{0pt}
 \item The rewards computation is agnostic to the number of 
 requests Ursula serves. Thus an active Ursula who may serve a huge number of 
-requests, and an idle one who does not receive any requests (or a 
+requests, and one who does not receive any requests (or a
 malicious Ursula that does not answer the requests she receives from Bob), will 
 both collect the same rewards if they hold identical policies.
-\david{We should make a distinction between being idle because there are no requests or being off-line. The former is a legitimate situation driven by factors outside Ursula's control, while the latter is a punishable action.}
 \item Confirming being online is flawed in the sense that this function does 
 not require any input or proofs from Ursula on providing the service. Ursula 
-can stay offline, not answering any Bob, and be online just to call the confirm activity 
+can stay offline and not respond to Bobs' requests, and simply come online merely to call the confirm activity
 function. This allows Ursula to collect both inflation rewards 
 and fees without doing anything, and even worse, it will be able to get her stake back once it unlocks (policies being managed by Ursula will have expired by this point). 
 \end{itemize}
@@ -82,15 +80,15 @@ online.
 
 
 Although we can use the number of served requests to compute the inflation 
-rewards as well, this will encourage Ursula to collude with Bob to issue large 
+rewards as well, this will encourage Ursula to collude with Bob to issue a large
 number of requests. If inflation rewards were to be distributed based on the earning of fees (which is desirable, as it would link node subsidization more closely with the network service), this might encourage Ursula to deploy its own Alice(s) 
-and Bob(s) to increase the demand, and thus, the cut of the inflation rewards.
+and Bob(s) to increase the demand, and thus increase its cut of the inflation rewards.
 
 
 In this document, we introduce several solutions for confirming service activity. 
 These solutions differ in the trust, efficiency, interactivity, and resource 
 requirements, in addition to their security guarantees. We present each of these 
-solution, where one of them is still a work in progress, discuss the aforementioned 
+solutions, where one of them is still a work in progress, discuss the aforementioned
 trade-offs and requirements of each of them, with the goal of selecting one of these 
 solutions to be adopted in the NuCypher network.
 

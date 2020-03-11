@@ -16,7 +16,7 @@ although it's not being used for the moment.}
 
 The following approach can be used here; given that Umbral already requires Bob to 
 have a key pair, this pair can be used for signing and verifying the signed requests. 
-This also means that Ursula should be aware the secret key can be used for 
+This also means that Ursula should be aware that the secret key can be used for
 signing the requests and the public 
 key should be known to Ursula to verify the signatures. 
 
@@ -26,7 +26,7 @@ key should be known to Ursula to verify the signatures.
 We do not place trust in any party and we assume that all participants are 
 self-interested. This means that a party may 
 follow the protocol or deviate from it, either on its own or by colluding 
-with other attackers, is solely based on what maximizes the financial profits 
+with other attackers, and decisions are solely based on what maximizes the financial profits
 of this party. As such, Ursula may collude with Bob or Alice (by spinning 
 its own Alice and/or Bob for example) to achieve her financial goals. 
 
@@ -36,7 +36,7 @@ at least one of them is honest. This assumption can be achieved by
 having a global assumption regarding the lower bound of the number of 
 honest Ursulas with respect to the total number of Ursulas in the system. 
 (Or it can be achieved by deploying a special entity like an external verifier, 
-that changes on periodic basis, or one by the NuCypher company, that is 
+that changes on a periodic basis, or one by the NuCypher company, that is
 trusted to faithfully participate in the confirm 
 service activity protocol. This verifier does not provide any other services 
 in the system.)
