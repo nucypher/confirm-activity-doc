@@ -1,7 +1,7 @@
 \section{Threat and Network Models}
 \label{threat-network-model}
 This section describes a modification for the network model of NuCypher 
-KMS required by the proposed confirm service activity solutions, in 
+required by the proposed confirm service activity solutions, in 
 addition to the threat model we adopt in this document.
 
 
@@ -11,13 +11,16 @@ integrity, and authenticity of the requests issued by Bob. This can be achieved
 by requiring Bob to sign each request it issues and to include a timestamp, or 
 sequence number, in each request to ensure freshness.
 
+\david{NuCrypher currently supports this by allowing Bob to include a blockhash,
+although it's not being used for the moment.}
 
 The following approach can be used here; given that Umbral already requires Bob to 
 have a key pair, this pair can be used for signing and verifying the signed requests. 
-This also means that Ursula should be aware  the secret key can be used for the 
+This also means that Ursula should be aware the secret key can be used for 
 signing the requests and the public 
 key should be known to Ursula to verify the signatures. 
 
+\david{Reusing the same keypair for encryption and signing may introduce some key management problems. Is it possible to find a solution that supports separate keypairs?}
 
 \subsection{Threat Model}
 We do not place trust in any party and we assume that all participants are 

@@ -51,6 +51,7 @@ The above is a high level description of the idea. However, more time is need to
 understand PCD and SNARKs in order to come up with a concrete construction 
 (if possible). Please see Section~\ref{future-work} for more information.
 
+\david{I think it is possible to aggregate current Umbral proofs. I started to explore this option in the past but there was no use for it at that moment.}
 
 \subsection{CoSi-based Scheme}
 This solution utilizes the idea of collective signing by electing a committee 
@@ -159,7 +160,7 @@ To prove correctness, Ursula will be challenged to open some leaves in the Merkl
 This can be done by having the policy contract select at random (like based 
 on the block hash or any other mechanism) the leaf IDs to be opened. If 
 Ursula fails to open them correctly within a predefined timeframe, she loses the 
-whole feed she was supposed to collect for serving $\omega$ requests.
+whole fee she was supposed to collect for serving $\omega$ requests.
 
 
 An alternative approach to the challenge/open scheme described above is to 
