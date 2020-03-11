@@ -17,12 +17,12 @@ requests correctly."
 Thus, in this setup, there is only one computation party, or prover, namely, Ursula. 
 For each round, where a round could be the time needed to mine a block on the 
 blockchain, Ursula starts with an input $x_1$, which is a signed and fresh request 
-from Bob. It answers this request with $cFarg_{x_1}$ and produces a correctness 
+from Bob. It answers this request with $cFrag_{x_1}$ and produces a correctness 
 proof $\pi_1$ as defined in the Umbral scheme, in addition to another correctness 
 proof $\hat{\pi}_1$ that will be used in the PCD composition. Then, when the next request $x_2$ arrives, 
 which is the input for the next step in the computation, Ursula answers 
-this request as before and produces $cFarg_{x_2}$ and a correctness proof $\pi_2$, then 
-it uses $(x_2, cFarg_{x_2}, \pi_2)$ and the previous proof $\hat{\pi}_1$ to produce $\hat{\pi}_2$. 
+this request as before and produces $cFrag_{x_2}$ and a correctness proof $\pi_2$, then 
+it uses $(x_2, cFrag_{x_2}, \pi_2)$ and the previous proof $\hat{\pi}_1$ to produce $\hat{\pi}_2$. 
 $\hat{\pi}_2$ does not only 
 attest to the correctness of $cFrag_{x_2}$, but also attests to the fact that Ursula has served 
 two valid distinct requests until now. The same process is repeated until the end of the 
@@ -44,13 +44,14 @@ served requests and a single proof attesting to its claim to the network. }
 
 The final proof will be processed by the contract that governs Alice's policy. A valid proof 
 allows Ursula to claim fees out of Alice's Ether escrow as a payment for $\omega$ re-encryption  
-requests.
+requests. 
 
 
 The above is a high level description of the idea. However, more time is need to 
 understand PCD and SNARKs in order to come up with a concrete construction 
 (if possible). Please see Section~\ref{future-work} for more information.
 
+\david{I think it is possible to aggregate current Umbral proofs. I started to explore this option in the past but there was no use for it at that moment.}
 
 \subsection{CoSi-based Scheme}
 This solution utilizes the idea of collective signing by electing a committee 
@@ -76,7 +77,7 @@ elected committee) verifies $m$ by checking the report as follows:
 signature over the request. (Here the policy will contain Bob's public 
 key to allow the committee use the right verification key.)
 
-\item Verify the correctness of each $cFarg$ as in the Umbral 
+\item Verify the correctness of each $cFrag$ as in the Umbral 
 scheme.
 
 \item Check that the value of $\omega$ inside $m$ agrees with the 
@@ -93,12 +94,12 @@ verified using the accumulated public keys of the cosigning Ursulas.
 \subsubsection{On the committee election.} This can be done 
 by using some deterministic computation over a block hash and mapping 
 the output to Ursulas' public keys. So the selection is not in the hand of the 
-working Ursula to prevent any potential collusion. 
+working Ursula to prevent any potential collusion. The selection may also take into account the presence and size of each Ursula's stake, to avoid an attacker spinning up enormous numbers of Ursulas in order to increase the chance they control the entire committee.
 
 
 The above scheme works under the assumption that at least one Ursula 
 in the elected committee is honest, which pertains to an assumption on the 
-least number of honest Ursulas in the network.
+least number of honest Ursulas in the network. If the latter assumption is under threat, one mitigating approach is to increase $t$ (the committee size).
 
 
 Another approach is to have a changing set of external verifiers, like 
@@ -157,9 +158,9 @@ to the network (recall that $\omega$ is the number of served requests).
 
 To prove correctness, Ursula will be challenged to open some leaves in the Merkle tree. 
 This can be done by having the policy contract select at random (like based 
-on the block hash or any other mechanism) the leave IDs to be opened. If 
+on the block hash or any other mechanism) the leaf IDs to be opened. If 
 Ursula fails to open them correctly within a predefined timeframe, she loses the 
-whole feed she was supposed to collect for serving $\omega$ requests.
+whole fee she was supposed to collect for serving $\omega$ requests.
 
 
 An alternative approach to the challenge/open scheme described above is to 
@@ -169,4 +170,4 @@ to allow anyone to verify the work. If no one file a complaint about the tree (w
 still need to define correctness properties, like checking all Bob public keys are 
 defined in the policy created by Alice, and that the response is valid by checking the 
 proof produced by Umbral), Ursula collects the fees of the service. On the other 
-hand, a valid complaint or proof-of-cheating costs Ursula the full amount of fees.
+hand, a valid complaint or proof-of-cheating costs Ursula the full amount of fees, or potentially involves slashing her stake. 
