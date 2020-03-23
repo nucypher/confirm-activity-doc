@@ -1,4 +1,4 @@
-\section{Potential Solutions}
+\subsection{Potential Solutions}
 \label{solutions}
 This section outlines several potential solutions for how to let Ursula prove 
 that she served a given number of distinct requests in a publicly verifiable way. 
@@ -7,7 +7,7 @@ is to share the high-level idea of each of these solutions and to chose the best
 after we define the meaning of best, to be adopted by the NuCypher network.
 
 
-\subsection{PCD-based Scheme}
+\subsubsection{PCD-based Scheme}
 The main idea here is to adapt the PCD framework so that Ursula
 can combine the correctness proofs she computes for Bobs' requests in a single proof 
 attesting to the following fact: ``Ursula has served $\omega$ distinct re-encryption 
@@ -53,7 +53,8 @@ understand PCD and SNARKs in order to come up with a concrete construction
 
 \david{I think it is possible to aggregate current Umbral proofs. I started to explore this option in the past but there was no use for it at that moment.}
 
-\subsection{CoSi-based Scheme}
+
+\subsubsection{CoSi-based Scheme}
 This solution utilizes the idea of collective signing by electing a committee 
 that will sign a report submitted by a specific Ursula after verifying that 
 the report supports the claim that ``Ursula has served $\omega$ distinct 
@@ -93,7 +94,7 @@ At the end, the working Ursula publishes the collective signature, which can be
 verified using the accumulated public keys of the cosigning Ursulas.
 
 
-\subsubsection{On the committee election.} This can be done
+\paragraph{On the committee election.} This can be done
 by using some deterministic computation over a block hash and mapping
 the output to Ursulas' public keys. So the selection is not determined by the
 working Ursula to prevent any potential collusion. The selection may also take into account the presence and size of each Ursula's stake, to avoid an attacker spinning up enormous numbers of Ursulas in order to increase the chance of them controlling the entire committee.
@@ -116,7 +117,7 @@ Thus, achieving the assumption of at least one member of the elected
 committee is honest.
 
 
-\subsubsection{On the publicity of the signed records.} Having a 
+\paragraph{On the publicity of the signed records.} Having a 
 valid collective signature from a committee (that has at least one honest 
 member) suffices for the correctness of the signed statement. However, 
 it could be better to keep the records that produced the message $m$  
@@ -130,7 +131,7 @@ participants of the trustworthiness of the committee or the validity of the
 assumption that at least one Ursula in the elected committee is honest.
 
 
-\subsubsection{On compensating the committee.} This solution may 
+\paragraph{On compensating the committee.} This solution may 
 raise the question of why would the elected committee (especially if it 
 is composed of other Ursulas in the system) participate in the CoSi 
 process, which also involves verifying the full request record presented 
@@ -144,7 +145,7 @@ part of the inflation rewards, or by having working Ursulas pay for
 it (however, this may complicate the system operation).
 
 
-\subsection{Challenge/Open-based Scheme}
+\subsubsection{Challenge/Open-based Scheme}
 This solution utilizes the idea of commit/challenge/open protocols. 
 In details, Ursula keeps track of the requests coming from Bob(s) 
 during a time round and assign each of them a unique sequence 

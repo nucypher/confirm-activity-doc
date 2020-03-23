@@ -9,6 +9,8 @@
 
 \renewcommand{\tabcolsep}{2pt}
 
+\setcounter{secnumdepth}{3}
+
 
 \renewcommand{\algorithmiccomment}[1]{/*#1*/}
 \usepackage{epsfig, endnotes, url}
@@ -48,7 +50,7 @@
 
 \begin{document}
 
-\title{\Large \bf Confirm Service Activity in the NuCypher Network}
+\title{\Large \bf Confirm Activity in the NuCypher Network}
 \author{Ghada Almashaqbeh}
 
 \institute{NuCypher \\
@@ -61,11 +63,11 @@
 
 \input{tex/abstract}
 \input{tex/intro}
-\input{tex/threat-network-model}
-\input{tex/prelim}
-\input{tex/solutions}
-\input{tex/analysis}
-\input{tex/future-work}
+\clearpage
+\input{tex/confirm-availability}
+\clearpage
+\input{tex/confirm-service-activity}
+
 
 
 \bibliographystyle{unsrt}       % APS-like style for physics

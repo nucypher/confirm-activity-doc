@@ -1,11 +1,11 @@
-\section{Threat and Network Models}
+\subsection{Threat and Network Models}
 \label{threat-network-model}
 This section describes a modification for the network model of NuCypher 
 required by the proposed confirm service activity solutions, in 
 addition to the threat model we adopt in this document.
 
 
-\subsection{Network Model}
+\subsubsection{Network Model}
 In order for the proposed solutions to work, we need to ensure freshness, 
 integrity, and authenticity of the requests issued by Bob. This can be achieved 
 by requiring Bob to sign each request it issues and to include a timestamp, or 
@@ -22,7 +22,7 @@ key should be known to Ursula to verify the signatures.
 
 \david{Reusing the same keypair for encryption and signing may introduce some key management problems. Is it possible to find a solution that supports separate keypairs?}
 
-\subsection{Threat Model}
+\subsubsection{Threat Model}
 We do not place trust in any party and we assume that all participants are 
 self-interested. This means that a party may 
 follow the protocol or deviate from it, either on its own or by colluding 
