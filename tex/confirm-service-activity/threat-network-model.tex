@@ -9,26 +9,33 @@ addition to the threat model we adopt in this document.
 In order for the proposed solutions to work, we need to ensure freshness, 
 integrity, and authenticity of the requests issued by Bob. This can be achieved 
 by requiring Bob to sign each request it issues and to include a timestamp, or 
-sequence number, in each request to ensure freshness.
+sequence number, in each request to ensure freshness. The keypair used for the 
+signature should be separate from the keypair Bob uses for proxy encryption in the 
+system. 
 
-\david{NuCrypher currently supports this by allowing Bob to include a blockhash,
-although it's not being used for the moment.}
 
-The following approach can be used here; given that Umbral already requires Bob to 
-have a key pair, this pair can be used for signing and verifying the signed requests. 
-This also means that Ursula should be aware that the secret key can be used for
-signing the requests and the public 
-key should be known to Ursula to verify the signatures. 
+Until now we assume that Alice pays for the service by using the Ether she locks 
+in the policy contract. Other arrangement may emerge in the system like having 
+Bob pay for each requests he issues. Such arrangement and its implication on the 
+confirm service activity issue will be studied once it becomes part of the NuCypher 
+network protocol.
 
-\david{Reusing the same keypair for encryption and signing may introduce some key management problems. Is it possible to find a solution that supports separate keypairs?}
 
 \subsubsection{Threat Model}
 We do not place trust in any party and we assume that all participants are 
 self-interested. This means that a party may 
 follow the protocol or deviate from it, either on its own or by colluding 
 with other attackers, and decisions are solely based on what maximizes the financial profits
-of this party. As such, Ursula may collude with Bob or Alice (by spinning 
+of this party. Thus, Ursula may collude with Bob or Alice (by spinning 
 its own Alice and/or Bob for example) to achieve her financial goals. 
+The latter is assumed in the current proposed solutions (PCD, CoSi, and 
+challenge/open based schemes). This means that solutions provide higher 
+security guarantees. It could be the case that relaxing the requirement of 
+accounting for Bob/Ursula collusion allows deploying more efficient solutions. 
+In order to make an educated decision of the plausibility of this threat, we need 
+more data about the system operation and the behavior of the participants 
+once the inflation rewards disappears in the system. As such, we leave this 
+issue until later when fees become the only source of rewards for Ursulas. 
 
 
 We also assume that when sampling a subset of Ursulas in the network, 

@@ -51,8 +51,6 @@ The above is a high level description of the idea. However, more time is need to
 understand PCD and SNARKs in order to come up with a concrete construction 
 (if possible). Please see Section~\ref{future-work} for more information.
 
-\david{I think it is possible to aggregate current Umbral proofs. I started to explore this option in the past but there was no use for it at that moment.}
-
 
 \subsubsection{CoSi-based Scheme}
 This solution utilizes the idea of collective signing by electing a committee 
@@ -74,11 +72,11 @@ each member in the committee. Each member Ursula (i.e., member in the
 elected committee) verifies $m$ by checking the report as follows:
 \begin{enumerate}
 \setlength{\itemsep}{0pt}
-\item Check that each request is distinct and valid by verifying Bob's 
+\item Check that each request is distinct by checking the sequence 
+number of the request (or any value that is used for freshaness), and valid by verifying Bob's 
 signature over the request. (Here the policy will contain Bob's public 
 key to allow the committee use the right verification key.)
 
-\derek{Signature only validates request, but for distinct requests, presumably blockhash/sequence number needs to also be checked?}
 
 \item Verify the correctness of each $cFrag$ as in the Umbral 
 scheme.
