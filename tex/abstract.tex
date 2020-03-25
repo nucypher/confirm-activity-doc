@@ -1,9 +1,12 @@
 \begin{abstract}
 This document introduces several aspects related to the confirm activity problem in 
-the NuCypher network. These include the current adopted solution, its relation 
-with both the fees and the inflation rewards, and three potential solutions that can be 
-used to provide a proof that an Ursula has served a specific number of re-encryption 
-requests within a given a period. We argue that the latter is a better option to be used 
-for computing the fees that Alice paid for an Ursula in the network, but not for 
-computing the inflation rewards.
+the NuCypher network. These include the different definitions of this problem, the 
+underlying threat model, the current adopted solution, and its relation 
+to both the fees and the inflation rewards. Then we present potential solutions 
+for the two types of the confirm activity issue, namely, confirm availability 
+and confirm service activity. The former confirms that Ursula is available all the time 
+and replies to all requests coming from Bob, while the latter provides a proof that an 
+Ursula has served a specific number of distinct re-encryption 
+requests within a given a period. We discuss the different solutions and outline at 
+what stage of the network operation they are likely to be used.
 \end{abstract}
