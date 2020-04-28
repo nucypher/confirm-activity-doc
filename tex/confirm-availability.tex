@@ -1,2 +1,63 @@
 \section{Confirm Availability}
+In this section, we present a solution for the issue of confirming availability of 
+Ursulas. As mentioned before, in the early stage of the network launch we only 
+require Ursulas to be online and responsive to any reencryption 
+requests issued by Bob. 
 
+
+We begin with the design details of our solution, after which we discuss its 
+resilience to any potential security attacks and its efficiency in terms of implementation 
+requirements and compatibility with the current status of the NuCypher network.
+
+
+\subsection{Optimistic Challenge-based Approach}
+The proposed solution is centered around two important concepts: requiring minimal 
+changes to the current network implementation, and minimizing the additional overhead. 
+
+
+Recall that in the NuCypher network, Bob receives a map from Alice containing 
+the set of Ursulas that has the key fragments needed to implement the access control policy. 
+When issuing a reencryption request, Bob uses this map to reach each of these Ursulas to obtain 
+the service. This communication is one-to-one meaning that no other Ursulas (or any 
+NuCypher network participant) mediates the communication between Bob and the target  
+Ursula. This in turn means that no one can attest to whether Ursula has responded if Bob 
+complains that he did nit hear back.
+
+
+The main idea is to add a mediator, or potentially a witness, in the service process (if needed) to monitor 
+a specific target Ursula and challenge its responsiveness. Hence, it is an optimistic protocol invoked 
+only when Bob complains about not receiving the service. In detail, for each round (where a 
+round is the time needed to mine a block on the blockchain) a set of Ursulas is selected at 
+random. We call these gateway Ursulas. Bob contacts a target Ursula for its request as usual. 
+If this Ursula does not respond, Bob complains to a gateway that this target Ursula 
+did not respond. At this point, the gateway will act as an intermediary and forwards 
+Bob's request to the target Ursula on behalf of Bob and waits for the answer. If the target 
+Ursula does not answer, this will trigger other gateways to perform the same process, and if the target 
+Ursula is still unresponsive, these gateways will collectively sign a witness against 
+this Ursula and publish it (see Section~\ref{cosi} for an overview of collective signing). 
+Once this witness is verified by the NuCypher smart contract responsible of service policies, 
+part of the target Ursula's stake will be slashed as a punishment.
+
+
+\paragraph{Gateway Ursulas election.} 
+
+
+\paragraph{Selecting gateway Ursulas to handle a Bob's complaint.}
+
+
+\paragraph{Witness verification.}
+
+
+\paragraph{Quantifying the financial punishment or slashing value.}
+
+
+\paragraph{Operating only during challenge phase.}
+
+
+\paragraph{DoS attacks.}
+
+
+\subsection{Security Analysis}
+
+
+\subsection{Performance Analysis}
