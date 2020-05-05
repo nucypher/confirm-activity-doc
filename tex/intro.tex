@@ -43,11 +43,11 @@ owner Alice, while the second is inflation rewards, i.e., newly minted
 NU tokens, coming from the NuCypher network. The latter will be provided during the 
 early stage of the network operation to encourage 
 adoption. It is expected that these rewards will disappear as the token cap is 
-reached, similar to other cryptocurrencies i the space.
+reached, similar to other cryptocurrencies in the space.
 
 
-Currently, the inflation rewards for each round or period are computed for each Ursula based on the size of her stake, and the confirmation that she is online. Confirming the status of being online is done by having each Ursula call a 
-simple function in one of the NuCypher contracts to signal that she is online.
+Currently, the inflation rewards for each round or period are computed for each Ursula based on the size of her stake given that she confirms to be online during this round. Confirming the status of being online is done by calling a 
+simple function in one of the NuCypher contracts, which is like a signal that the calling Ursula is online.
 
 As for fees, Ursula collects part of the Ether locked by Alice during the policy's duration in proportion to the number of periods up to that point in which Ursula has confirmed her online status. 
 
@@ -57,17 +57,17 @@ The current approach of computing Ursula's inflation rewards and service fees su
 main problems:
 \begin{itemize}
 \setlength{\itemsep}{0pt}
-\item The rewards computation (both fees and inflation rewards) is agnostic to the number of 
+\item The rewards computation (both fees and inflation) is agnostic to the number of 
 requests Ursula serves. Thus, an active Ursula who may serve a huge number of 
-requests, and one who does not receive any requests (or a
-malicious/lazy Ursula that does not answer the requests she receives from Bob), will 
+re-encryption requests, and one who does not receive any requests (or a
+malicious/lazy Ursula that does not answer Bob's requests), will 
 both collect the same amount of rewards if they hold identical policies.
 
 \item Confirming being online is flawed in the sense that this function does 
 not require any input or proofs from Ursula on providing the service. Ursula 
-can stay offline and not respond to Bobs' requests, and simply come online merely to call the confirm activity
+can stay offline and not respond to Bobs' requests, but come online merely to call the confirm activity
 function. This allows Ursula to collect both inflation rewards 
-and fees without doing any work. Even worse, Ursula will be able to get her stake back once she unlocks (i.e., when policies being managed by Ursula expire). 
+and fees without doing any work. Even worse, Ursula will be able to get her stake back once she unlocks its her stake (i.e., when policies being managed by Ursula expire). 
 \end{itemize}
 
 
@@ -92,10 +92,9 @@ These solutions differ in the trust, efficiency, interactivity, and resource
 requirements, in addition to their security guarantees. We divide the document into 
 two parts, the first is about confirm availability, while the second is about confirm 
 service activity. We begin with outlining the adopted threat model for each problem 
-definition, as well as the network model Then we present our solutions for each 
-of these problems, discuss the aforementioned
+definition, as well as the network model. Then, we present the proposed solutions, discuss the aforementioned
 trade-offs and requirements of each of them, with the goal of selecting one of these 
-solutions to be adopted in each stage of the NuCypher network operation.
+solutions to be adopted for each stage of the NuCypher network operation.
 
 
 \subsection{Threat and Network Models}
@@ -107,8 +106,8 @@ addition to the threat model adopted in this work.
 
 \subsubsection{Network Model.}
 In order for the proposed solutions to work, we need to ensure freshness, 
-integrity, and authenticity of the requests (or service compliants) issued by Bob. This can be achieved 
-by requiring Bob to sign each request it issues and to include a timestamp, or 
+integrity, and authenticity of the requests (as well as service complaints as we will see later) issued by Bob. This can be achieved 
+by requiring Bob to sign each re-encryption request it issues and to include a timestamp, or 
 sequence number, in each request to ensure freshness. The keypair used for the 
 signature should be separate from the keypair Bob uses for proxy encryption in the 
 system. 
@@ -117,36 +116,38 @@ system.
 Until now we assume that Alice pays for the service by using the Ether she locks 
 in the policy contract. Other arrangement may emerge in the system like having 
 Bob pay for each requests he issues. Such an arrangement and its implication on the 
-confirm service activity issue will be studied once it becomes part of the NuCypher 
+confirm activity issue will be studied once it becomes part of the NuCypher 
 network protocol.
 
 
 \subsubsection{Threat Model.}
-We do not place trust in any party and we assume that all participants are 
+In our threat model, we make the following set of assumptions:
+\begin{itemize}
+\item {\bf Self-interested parties:} We do not place trust in any party and we assume that all participants are 
 self-interested. This means that a party may decide to 
 follow the protocol or deviate from it, either on its own or by colluding 
 with other attackers, and such decision is solely based on what maximizes the financial profits
-of this party. Thus, if it is profitable, an Ursula may, for example, spin out  
+of this party.
+
+\item {\bf Attackers' collusion:} If it is profitable, an Ursula may, for example, spin out  
 its own Alice and/or Bob or collude with Alice. We do not consider collusion 
 between Bob and Ursula as a practical threat. This means that cases of Bob pretending  
 that he got service from Ursula (while no service is delivered) is not an issue. We do not 
 suspect this will be of any importance and there is no motivation to do it given that 
 the work Ursula does for re-encryption is minimal.
 
-
 The above non-collusion assumption does not affect the solutions proposed to handle 
-the confirm service activity discussed in Section~\ref{confirm-service-actiivty}. This 
+the confirm service activity discussed in Section~\ref{confirm-service-activity}. This 
 means that these solutions provide higher 
-security guarantees and address the issue f potential collusion between Bob and Ursula. 
+security guarantees and address the issue of potential collusion between Bob and Ursula. 
 It could be the case that relaxing the requirement of 
 addressing this collusion case allows deploying more efficient solutions. 
 In order to make an educated decision of the plausibility of this threat, we need 
 more data about the system operation and the behavior of the participants 
-once the inflation rewards disappears in the system. As such, we leave this 
-issue until later when fees become the only source of rewards for Ursulas. 
+once the inflation rewards disappears in the system. Therefore, we leave this 
+issue until later when fees become the only source of rewards for Ursulas.
 
-
-We also assume that when sampling a subset of Ursulas in the network, 
+\item {\bf Honest Ursulas:} We also assume that when sampling a subset of Ursulas in the network, 
 at least one of them is honest. This assumption can be achieved by 
 having a global assumption regarding the lower bound of the number of 
 honest Ursulas with respect to the total number of Ursulas in the system. 
@@ -155,6 +156,7 @@ that changes on a periodic basis, or one by the NuCypher company, that is
 trusted to faithfully participate as a member of each samples set. This 
 verifier does not provide any other services 
 in the system.)
+\end{itemize}
 
 
 Other than the above, we have usual assumptions like dealing with 
