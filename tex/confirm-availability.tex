@@ -15,46 +15,69 @@ The proposed solution is centered around two important concepts: requiring minim
 changes to the current network implementation, and minimizing the additional overhead. 
 
 
-Recall that in the NuCypher network, Bob receives a map from Alice containing 
+\paragraph{Discovering working Ursulas.} Recall that in the NuCypher network, Bob receives a map from Alice containing 
 the set of Ursulas that has the key fragments needed to implement the access control policy. 
-When issuing a reencryption request, Bob uses this map to reach each of these Ursulas to obtain 
-the service. This communication is one-to-one meaning that no other Ursulas (or any 
-NuCypher network participant) mediates the communication between Bob and the target  
+When issuing a re-encryption request, Bob uses this map (in association with the network discovery protocol) to reach each of these Ursulas and obtain 
+the service. 
+
+
+In particular, in the NuCypher network there is a separation between the role of a staker and a working Ursula. All stakers' Ethereum addresses, along with their stake values, are recorded in one of the NuCypher network smart contracts, namely, the \stakeescrow contract. Each of these stakers will be tied, or bonded, to a working Ursula to provide the re-encryption service by having its address listed next to the staker's address. 
+
+
+Note that the \stakeescrow contract does not contain any information about how to reach a specific working Ursula. Thus, the map that Bob receives includes only the Ethereum addresses of the working Ursulas. To allow the parties to communicate with each other, each participant, i.e., Alice, Bob, Ursula, employs a discovery protocol (more like a gossiping protocol) to discover the IP addresses and ports of the working Ursulas in the network.  
+
+
+The discovery process also includes retrieving the keypair a working Ursula uses for the re-encryption service purposes. We call this keypair the stamp of a working Ursula, and we require an Ursula to use its stamp when signing all messages related to the proposed confirm availability protocol. 
+
+
+\paragraph{Optimistic Ursula Challenging.} Once Bob discovers the working Ursulas listed in the policy map, he can connect with each of them and start issuing service requests. As noted, this communication is one-to-one meaning that no other Ursulas (or any 
+NuCypher network participant) mediates the communication between Bob and each working  
 Ursula. This in turn means that no one can attest to whether Ursula has responded if Bob 
-complains that he did nit hear back.
+complains later that he did not hear back.
 
 
 The main idea is to add a mediator, or potentially a witness, in the service process (if needed) to monitor 
-a specific target Ursula and challenge its responsiveness. Hence, it is an optimistic protocol invoked 
+a specific working Ursula and challenge its responsiveness. Hence, it is an optimistic protocol invoked 
 only when Bob complains about not receiving the service. In detail, for each round (where a 
 round is the time needed to mine a block on the blockchain) a set of Ursulas is selected at 
-random. We call these gateway Ursulas. Bob contacts a target Ursula for its request as usual. 
-If this Ursula does not respond, Bob complains to a gateway that this target Ursula 
+random. We call these gateway Ursulas. Bob contacts a working Ursula asking for the re-encryption service as usual. 
+If this Ursula does not respond, Bob complains to a gateway that this Ursula 
 did not respond. At this point, the gateway will act as an intermediary and forwards 
-Bob's request to the target Ursula on behalf of Bob and waits for the answer. If the target 
-Ursula does not answer, this will trigger other gateways to perform the same process, and if the target 
-Ursula is still unresponsive, these gateways will collectively sign a witness against 
+Bob's request to this working Ursula on behalf of Bob and waits for the answer. If the working 
+Ursula does not answer, this will trigger other gateways to perform the same process, i.e., forward the request on behalf of Bob and wait for an answer. If the working 
+Ursula is still unresponsive, these gateways will collectively sign a witness, basically a statement saying that the working Ursula was contacted by these gateways and she did not respond, against 
 this Ursula and publish it (see Section~\ref{cosi} for an overview of collective signing). 
-Once this witness is verified by the NuCypher smart contract responsible of service policies, 
-part of the target Ursula's stake will be slashed as a punishment.
+Once this witness is verified by the NuCypher network, 
+part of the working Ursula's stake will be slashed as a punishment.
 
 
-\paragraph{Gateway Ursulas election.} 
+\paragraph{Gateway Ursulas Selection.} Let's assume that for each challenge phase a set of $n$ gateways Ursulas is selected. A witness will be accepted by the network if it is signed by at least $t$ gateways among this set (this threshold is a relaxation of requiring all gateways to sign since it could be the case that not all of them are active). 
 
 
-\paragraph{Selecting gateway Ursulas to handle a Bob's complaint.}
+A simple idea to select the gateways is to use a high entropy source of randomness to obtain a random beacon for each round. Then feed this beacon, concatenated with the hash of Bob's request, to an iterative hashing process. After each iteration, map the hash to a working Ursula index as listed in the \stakeescrow contract. That is, the working Ursula bonded with the first staker listed in the contract has index 0, the next has index 1, and so on. Then, rehash the previous hash and map the output to an index. If any collision happens, i.e., a previous index is produced again, discard it and proceed to the next hash iteration. This process is repeated until a distinct set of $n$ indices is computed. 
 
 
-\paragraph{Witness verification.}
+Note that the selection process may contain Ursulas for which Bob does not have a contact information. Hence, Bob has to discover these Ursulas before being able to submit a complain. To reduce the delays, and as outlined earlier, Bob starts with complaining to one gateway Ursula and involves the rest if the working Ursula does not respond to the challenge from this gateway. Hence, Bob can start with a gateway that he already knows how to reach (if any) and in the meantime works on discovering the rest of the selected gateways (if he does not already have their contact information).
 
 
-\paragraph{Quantifying the financial punishment or slashing value.}
+Furthermore, the above protocol assumes working in the random oracle model, meaning that hash functions are modeled as random oracles. Thus, the iterative hashing process selects at random the working Ursulas. Although, we believe this is sufficient for our purposes, this can be replaced with more sophisticated approaches to produce random strings (that are then mapped to indices), e.g., a verifiable random function~\cite{micali1999verifiable}. We leave this as part of our future work in case we decide to pursue this path. 
 
 
-\paragraph{Operating only during challenge phase.}
+As for the high entropy source of randomness, there are several potential approaches here. We can rely on an external source, e.g., the NIST random beacon~\cite{nist-beacon} or a combination of multiple sources, for that. Or we can work also in the random oracle model and assume that block hashes on the blockchain are drawn from a uniform distribution, and thus, use the block hash as a random beacon. In particular, for the current round, the hash of the block that was mined $y$ rounds ago is used ($y$ is confirmation interval in the underlying cryptocurrency system). Alternatively, and to avoid the random oracle assumption, we can use randomness extractors to produce a high entropy beacon from the block hashes which itself could be low entropy~\cite{bonneau2015bitcoin}.
 
 
-\paragraph{DoS attacks.}
+\paragraph{Witness Verification.}
+
+
+\paragraph{Quantifying the Financial Punishment or Slashing Value.}
+
+
+\paragraph{Operating Only During The Challenge Phase.}
+
+
+\paragraph{DoS Attacks.}
+
+\paragraph{Unresponsive Gateways.}
 
 
 \subsection{Security Analysis}
