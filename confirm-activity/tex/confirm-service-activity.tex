@@ -1,0 +1,323 @@
+\section{Confirm Service Activity}
+\label{confirm-service-activity}
+In this section, we present potential solutions for the confirm service activity 
+problem. The goal is to come up with provably secure solutions that allows an 
+Ursula to prove that it has served a given number of distinct re-encryption 
+requests within a given period. 
+
+
+The rest of this section provides an overview of the underlying cryptographic primitives and 
+protocols, after which it discusses the proposed solutions along with an analysis of 
+their security and efficiency aspects. Lastly, the section concludes with directions of 
+future work on the confirm service activity issue.
+
+
+\subsection{Preliminaries}
+\label{prelim}
+This section provides an overview of two concepts that we use in the 
+proposed solutions. These include the framework of proof carrying data (PCD) 
+and the collective signing (CoSi) protocol.
+
+
+\subsubsection{Proof Carrying Data (PCD).}
+The paradigm of PCD~\cite{chiesa2010proof} allows proving to the correctness of a distributed 
+computation involving untrusted parties. It produces a single proof for the output 
+that attests not only the correctness of the final result, but also 
+the correctness of the entire history of intermediate computations that produced 
+this result. Correctness here is defined as a polynomially computable predicate that 
+abstracts the properties, or invariants, that must be satisfied.
+
+
+\begin{figure}[h!]
+\centerline{
+\includegraphics[height= 1.3in, width = 1.0\columnwidth]{figures/pcd-diagram.pdf}}
+\caption{An example of a PCD application. A distributed computation involving parties $P_i$, for 
+$i \in \{1, \dots, 6\}$, each 
+of which has a local input $x_i$ and produces an output $y_i$ with a proof $\pi_i$. }
+\label{pcd-diagram}
+\end{figure}
+
+
+To clarify how PDC works, consider a distributed computation task that involves 
+the set of parties shown in Figure~\ref{pcd-diagram}. Party $P_1$ starts the computation with its 
+own input, produces an intermediate output with a proof saying that it performed 
+the computation as defined by the protocol. It then sends both the output and the proof 
+to the next party, which is $P_2$ in this case. Here, $P_2$ will 
+have its own input $x_2$, as well as everything it received from $P_1$ (including the proof) 
+as input to the computation it will perform. Similarly, $P_2$ will produce another 
+intermediate output and a proof. This proof not only attests to the correctness of the 
+computation done by $P_2$, but also the history that lead to the result $y_2$. In other 
+words, it implicitly includes 
+the proof from $P_1$. The same process continues until the full computation is finished. 
+Anyone can verify the correctness or compliance of the whole distributed protocol by 
+only verifying the last proof $\pi_6$ produced by the exit party, which is $P_6$ in the figure.
+
+
+As shown, PCDs enable untrusted parties to work with each other in a fully distributed 
+fashion, without overwhelming the system with the storage and verification of individual 
+proofs for each step of the performed protocol. Also, they attest to correctness or compliance  
+to the prescribed protocol without re-executing any of the intermediate computations. Thus, 
+they provide a promising paradigm for confirming service activity in a compact way.
+
+
+\subsubsection{Collective Signing (CoSi).}
+\label{cosi}
+CoSi~\cite{syta2016keeping} is a protocol that enables a set of distributed parties to cosign a 
+statement together in a way that produces a single signature. As such, both the 
+verification time and the space requirements are just like having a single signer. The 
+difference is that this signature attests that all parties agree with the signed 
+statement instead of only one.
+
+
+CoSi builds upon Schnorr 
+multisignatures~\cite{schnorr1991efficient, bellare2006multi, micali2001accountable}, but combines 
+them with communication trees to speed up the signing process in 
+case of a large number of cosigners. In what follows, we only present the protocol
+with a plain communication architecture as it suffices for the confirm service activity 
+solution introduced in this document.
+
+
+Schnorr signatures work in a group $\mathbb{G}$ of a prime order $q$ and 
+generator $g$, such that the discrete log is believed to be hard in this group. 
+Take $n$ parties that want to sign a statement together. 
+Each of these parties has a secret $sk_i \in \mathbb{Z}_q$ and a public key 
+$pk_i \in \mathbb{G}$ such that $pk_i = g^{sk_i}$. To sign a message $m$, 
+one of these parties, let's say $P_1$, coordinates the signing process as follows: 
+\begin{enumerate}
+\setlength{\itemsep}{0pt}
+\item $P_1$ prepares a message $m$ and sends it to the rest of the signers.
+
+\item Each party $P_i$, possibly after verifying 
+$m$, selects a secret $\tau_i \in \mathbb{Z}_q$ and compute $V_i = g^{\tau_i}$, 
+then it sends $V_i$ back to $P_1$.
+
+\item $P_1$ aggregates all random values received from 
+the signers, and its own, by computing $V = \Pi_{i =1}^n V_i$.
+
+\item $P_1$ then computes 
+$c = H(V||m)$, where $H$ is an appropriate hash function. $P_1$ then 
+sends $c$ to the rest of the parties.
+
+\item Each party computes a response $r_i = \tau_i - sk_i\cdot c$ and 
+sends it to $P_1$.
+
+\item Lastly, $P_1$ computes $r = \sum_{i=1}^n r_i$, and outputs the 
+collective signature over $m$ as $(c, r)$.
+\end{enumerate}
+
+
+Verifying the signature proceeds as in classical Schnorr signatures~\cite{schnorr1991efficient} with 
+one difference. An aggregated public key $pk$ is used in the verification process, 
+which is computed as $pk = \Pi_{i=1}^{n} pk_i$.
+
+
+The work in~\cite{syta2016keeping} tackles several issues related to 
+the availability of the 
+signing parties, and optimizing the communication between them. 
+We believe that such techniques can be used in the NuCypher network if we adopt the 
+CoSi-based solution for the confirm service activity issue.
+
+
+\subsection{Potential Solutions}
+\label{solutions}
+This section outlines several potential solutions for how to let Ursula prove 
+that she served a given number of distinct requests in a publicly verifiable way. 
+One of these solutions, the PCD-based one, is still a work in progress. The goal 
+is to share the high-level idea of each of these solutions and to chose the best one,
+after we define the meaning of best, to be adopted by the NuCypher network.
+
+
+\subsubsection{PCD-based Scheme.}
+The main idea here is to adapt the PCD framework so that Ursula
+can combine the correctness proofs she computes for Bobs' requests in a single proof 
+attesting to the following fact: ``Ursula has served $\omega$ distinct re-encryption 
+requests correctly." 
+
+
+Thus, in this setup, there is only one computation party, or prover, namely, Ursula. 
+For each round, where a round could be the time needed to mine a block on the 
+blockchain, Ursula starts with input $x_1$, which is a signed and fresh request
+from Bob. It answers this request with $cFrag_{x_1}$ and produces a correctness 
+proof $\pi_1$ as defined in the Umbral scheme, in addition to another correctness 
+proof $\hat{\pi}_1$ that will be used in the PCD composition. Then, when the next request $x_2$ arrives, 
+which is the input for the next step in the computation, Ursula answers 
+this request as before and produces $cFrag_{x_2}$ and a correctness proof $\pi_2$, then 
+it uses $(x_2, cFrag_{x_2}, \pi_2)$ and the previous proof $\hat{\pi}_1$ to produce $\hat{\pi}_2$. 
+$\hat{\pi}_2$ does not only 
+attest to the correctness of $cFrag_{x_2}$, but also attests to the fact that Ursula has served 
+two valid distinct requests until now. The same process is repeated until the end of the 
+round to produce a single proof $\hat{\pi}_{\omega}$ along with the number of 
+served requests $\omega$. Figure~\ref{pcd-based-sol} depicts 
+this process pictorially.
+
+
+\begin{figure}[h!]
+\centerline{
+\includegraphics[height= 0.7in, width = 1.0\columnwidth]{figures/pcd-based-sol.pdf}}
+\caption{PCD-based solution diagram. Ursula starts a round in the idle state. When 
+the first request arrives, Ursula responds to the request and starts composing the 
+proofs as new requests arrive. At the end of the round, Ursula announces the number of 
+served requests and a single proof attesting to its claim to the network. }
+\label{pcd-based-sol}
+\end{figure}
+
+
+The final proof will be processed by the contract that governs Alice's policy. A valid proof 
+allows Ursula to claim fees out of Alice's Ether escrow as a payment for $\omega$ re-encryption  
+requests. 
+
+
+The above is a high level description of the idea. However, more time is need to 
+understand PCD and SNARKs in order to come up with a concrete construction 
+(if possible). Please see Section~\ref{future-work} for more information.
+
+
+\subsubsection{CoSi-based Scheme.}
+This solution utilizes the idea of collective signing by electing a committee 
+that will sign a report submitted by a specific Ursula after verifying that 
+the report supports the claim that ``Ursula has served $\omega$ distinct 
+re-encryption requests correctly." 
+
+
+At a high level, the scheme works as follows. For each round, a working Ursula keeps 
+a full record of all the requests that she served during the round. These 
+include the signed requests received from Bob(s), and the produced $cFrag$ 
+and the correctness proof $\pi$ (as in the Umbral scheme) for 
+each request. At the end of the round, a committee of $t$ Ursulas is 
+elected, where $t$ is a small integer, e.g., $t = 5$. The working Ursula 
+initiates the CoSi protocol to sign the message $m$ stated above while 
+replacing $\omega$ with the actual number of served 
+requests in the round. This Ursula sends $m$ along with the full report to 
+each member in the committee. Each member Ursula (i.e., member in the 
+elected committee) verifies $m$ by checking the report as follows:
+\begin{enumerate}
+\setlength{\itemsep}{0pt}
+\item Check that each request is distinct by checking the sequence 
+number of the request (or any value that is used for freshaness), and valid by verifying Bob's 
+signature over the request. (Here the policy will contain Bob's public 
+key to allow the committee use the right verification key.)
+
+
+\item Verify the correctness of each $cFrag$ as in the Umbral 
+scheme.
+
+\item Check that the value of $\omega$ inside $m$ agrees with the 
+record.
+\end{enumerate}
+
+
+If everything is fine, each member of the committee and the working 
+Ursula finalize the CoSi signing protocol as described in Section~\ref{cosi}. 
+At the end, the working Ursula publishes the collective signature, which can be 
+verified using the accumulated public keys of the cosigning Ursulas.
+
+
+\paragraph{On the committee election.} This can be done
+by using some deterministic computation over a block hash and mapping
+the output to Ursulas' public keys. So the selection is not determined by the
+working Ursula to prevent any potential collusion. The selection may also take into account the presence and size of each Ursula's stake, to avoid an attacker spinning up enormous numbers of Ursulas in order to increase the chance of them controlling the entire committee.
+
+
+The above scheme works under the assumption that at least one Ursula
+in the elected committee is honest, which pertains to an assumption on the
+least number of honest Ursulas in the network. If the latter assumption is under threat, one mitigating approach is to increase $t$ (the committee size).
+
+
+Another approach is to have a changing set of external verifiers, like
+trusted partners, that all working Ursulas must use for the CoSi signing
+of their records.
+
+
+A third approach is to keep the deterministic selection of the committee
+but with an external member, e.g., either a trusted partner verifier
+or a special verifier node deployed and maintained by the NuCypher company.
+Thus, achieving the assumption of at least one member of the elected
+committee is honest.
+
+
+\paragraph{On the publicity of the signed records.} Having a 
+valid collective signature from a committee (that has at least one honest 
+member) suffices for the correctness of the signed statement. However, 
+it could be better to keep the records that produced the message $m$  
+available for a while so that any party can verify them (the verifying
+parties could maintain such a public record for a given period after which
+the logs can be discarded). 
+
+
+We can resort to this option just at the beginning to convince the 
+participants of the trustworthiness of the committee or the validity of the
+assumption that at least one Ursula in the elected committee is honest.
+
+
+\paragraph{On compensating the committee.} This solution may 
+raise the question of why would the elected committee (especially if it 
+is composed of other Ursulas in the system) participate in the CoSi 
+process, which also involves verifying the full request record presented 
+by the working Ursula. This can be pictured as a collaborative
+work, the committee does the work so that others will do the same
+when the committee members play the role of working Ursulas.
+
+
+Another option is to pay the committee for their work, either as
+part of the inflation rewards, or by having working Ursulas pay for 
+it (however, this may complicate the system operation).
+
+
+\subsubsection{Commit/Challenge/Open-based Scheme.}
+This solution utilizes the idea of commit/challenge/open protocols. 
+In details, Ursula keeps track of the requests coming from Bob(s) 
+during a time round and assign each of them a unique sequence 
+number. That is, Ursula replies with $cFrag$ and the correctness proof 
+along with a sequence number showing the order of the request within 
+the batch of requests handled during a round. At the end of the round, 
+Ursula constructs a Merkle tree of all requests, where 
+the requests (and their replies) are the leaves of the tree ordered by the sequence
+numbers. Ursula signs the root of the tree, denoted as $root$ to produce 
+a signature $\sigma_{root}$, then it publishes $(\omega, root, \sigma_{root})$ 
+to the network (recall that $\omega$ is the number of served requests). 
+
+
+To prove correctness, Ursula will be challenged to open some leaves in the Merkle tree. 
+This can be done by having the policy contract select at random (e.g. based
+on the block hash or any other mechanism) the leaf IDs to be opened. If 
+Ursula fails to open them correctly within a predefined timeframe, she loses the 
+whole fee she was supposed to collect for serving $\omega$ requests.
+
+
+An alternative approach to the challenge/open scheme described above is to 
+have Ursula publish the full Merkle tree on some known public space but
+not on the blockchain, and make the full record available online for a specific period
+to allow anyone to verify the work. If no one files a complaint about the tree (we
+still need to define correctness properties, like checking all Bob public keys are 
+defined in the policy created by Alice, and that the response is valid by checking the 
+proof produced by Umbral), Ursula collects the fees for the provided service. On the other
+hand, a valid complaint or proof-of-cheating costs Ursula the full allocation of fees, or potentially involves slashing her stake.
+
+
+\subsection{Discussion and Analysis}
+\label{analysis}
+Here we will discuss the security, financial, and performance implications of the 
+proposed solutions to choose the best. This will be delayed until we crystallize the 
+details of each of the solutions.
+
+
+\subsection{Future Work}
+\label{future-work}
+Most of the future work on the confirm service activity issue 
+will be dedicated to construct a concrete PCD-based solution. This 
+includes the following:
+\begin{itemize}
+\item Understand PCD and its applications in a greater depth. This 
+also requires exploring NIZK in general and SNARKs in specific. 
+
+\item Define an efficient output correctness predicate that characterizes 
+the correctness of the statement that PCD will attest for. This could be 
+hard for the confirm activity issue as the value of the output is dynamic 
+based on the workload Ursula may receive.
+
+\item Define a way to compose the proofs efficiently and produce 
+a single proof at the end. This will be tied to the formulated predicate.
+
+\item Argue about the correctness and security of the concrete scheme.
+\end{itemize} 
+

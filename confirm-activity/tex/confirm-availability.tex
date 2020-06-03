@@ -1,0 +1,105 @@
+\section{Confirm Availability}
+In this section, we present a solution for confirming availability of 
+Ursulas. As mentioned before, in the early operation stage of the network we only 
+require Ursulas to be online and responsive to the re-encryption 
+requests issued by Bob. 
+
+
+We introduce the design details of our solution, after which we discuss some potential security attacks and how to address them.
+
+
+\subsection{Optimistic Challenge-based Approach}
+The proposed solution is centered around two important concepts: requiring minimal 
+changes to the current network implementation, and minimizing the additional overhead. \\
+
+
+\noindent{\bf Discovering Working Ursulas.} Recall that in the NuCypher network, Bob receives a map from Alice containing 
+the set of Ursulas that has the key fragments needed to implement the access control policy. 
+When issuing a re-encryption request, Bob uses this map (in association with the network discovery protocol) to reach each of these Ursulas and obtain 
+the service. 
+
+
+In particular, in the NuCypher network there is a separation between the role of a staker and a working Ursula. All stakers' Ethereum addresses, along with their stake values, are recorded in one of the NuCypher network smart contracts, namely, the \stakeescrow contract. Each of these stakers will be tied, or bonded, to a working Ursula to provide the re-encryption service by having its address listed next to the staker's address. 
+
+
+The \stakeescrow contract does not contain any information about how to reach a specific working Ursula. Thus, the map that Bob receives includes only the Ethereum addresses of the working Ursulas. To allow the parties to communicate with each other, each participant, i.e., Alice, Bob, Ursula, employs a discovery protocol (more like a gossiping protocol) to discover the IP addresses and ports of the working Ursulas in the network.  
+
+
+The discovery process also includes retrieving the keypair a working Ursula uses for the re-encryption service purposes. We call this keypair a stamp, and we require an Ursula to use her stamp when signing all messages related to the proposed confirm availability protocol. \\
+
+
+\noindent{\bf Optimistic Ursula Challenging.} Once Bob discovers the working Ursulas listed in the policy map, he can connect with each of them and start issuing service requests. As noted, this communication is one-to-one meaning that no other Ursulas (or any 
+NuCypher network participant) mediates the communication between Bob and working  
+Ursula. This in turn means that no one can attest to whether Ursula has responded if Bob 
+complains later that he was not served.
+
+
+The main idea is to add a mediator, or potentially a witness, in the service process (if needed) to monitor a specific working Ursula and challenge its responsiveness. Hence, it is an optimistic protocol invoked only when Bob complains about not receiving the service. In detail, for each round (where a 
+round is the time needed to mine a block or several blocks on the blockchain) a set of Ursulas is selected at random. We call these gateway Ursulas. Bob contacts a working Ursula asking for the re-encryption service as usual. 
+If this Ursula does not respond, Bob complains to a gateway about it. At this point, the gateway will act as an intermediary and forwards Bob's request to this working Ursula on behalf of Bob and waits for the answer. If no answer is received, this gateway will trigger other gateways to perform the same process, i.e., forward the request on behalf of Bob and wait for an answer. If the working 
+Ursula is still unresponsive, these gateways will collectively sign a proof-of-unavailability, which is basically a statement saying that the working Ursula was contacted by these gateways and she did not respond, and publish it through the \stakeescrow contract (see Section~\ref{cosi} for an overview of collective signing). Once the proof-of-unavailability is verified, part of the working Ursula's stake will be slashed as a punishment. \\
+
+
+\noindent{\bf Gateways Selection.} For each round a set of $n$ gateways Ursulas will be selected. A proof-of-unavailability will be accepted by the network if it is signed by at least $t$ gateways among this set (this threshold is a relaxation of requiring all gateways to sign since it could be the case that not all of them are active). 
+
+
+A simple idea to select the gateways is to use a high entropy source of randomness to obtain a random beacon for each round. Then feed this beacon into an iterative hashing process. After each iteration, map the hash to a working Ursula index as listed in the \stakeescrow contract. That is, the working Ursula bonded with the first staker listed in the contract has index 0, the next has index 1, etc. Then, rehash the previous hash and map the output to an index, and so no. In case of a collision, i.e., an already selected index is produced again, discard it and proceed to the next hash iteration. This process is repeated until a set of distinct $n$ indices is computed. 
+
+
+Note that the selection process may contain Ursulas for which Bob does not have a contact information. Hence, Bob has to discover these Ursulas before being able to submit a complaint. To reduce the delays, and as outlined earlier, Bob starts with complaining to one gateway and involves the rest if the working Ursula does not respond to the challenge from this gateway. Hence, Bob can start with a gateway that he already knows how to reach (if any) and in the meantime works on discovering the rest of the selected gateways (if he does not already have their contact information).
+
+
+Furthermore, the above protocol assumes working in the random oracle model, meaning that hash functions are modeled as random oracles. Thus, the iterative hashing process selects at random the working Ursulas. Although, we believe this is sufficient for our purposes, this can be replaced with more sophisticated approaches to produce random strings (that are then mapped to indices), e.g., a verifiable random function~\cite{micali1999verifiable}. We leave this as part of our future work in case we decide to pursue this path. 
+
+
+As for the high entropy source of randomness, there are several potential approaches here. We can rely on an external source, e.g., the NIST random beacon~\cite{nist-beacon} or even a combination of multiple sources, for that. Or we can work also in the random oracle model and assume that block hashes are drawn from a uniform distribution, and thus, use the block hash as a random beacon. In particular, for the current round, the hash of the block that was mined $y$ rounds ago is used ($y$ is the confirmation interval in the underlying cryptocurrency system). Alternatively, and to avoid the random oracle assumption, we can use randomness extractors to produce a high entropy beacon from the block hashes which itself could be low entropy~\cite{bonneau2015bitcoin}. \\
+
+
+\noindent{\bf Proof-of-unavailability processing.} As mentioned previously, a proof-of-unavailability against a working Ursula is a statement stating that this Ursula was unavailable during a specific round signed by at least $t$ gateways out of the $n$ gateways selected for that round. Such a proof is submitted to the \stakeescrow contract and is verified as follows:
+\begin{itemize}
+\item Produce the list of gateways selected for the current round. This is done by using the same process described previously.
+
+\item Verify the collective signature over the signed statement (see Section~\ref{cosi}).
+
+\item If everything is fine, the \stakeescrow contract revokes part of the stake bonded to the working Ursula as a punishment.
+\end{itemize}
+
+
+Note that the above assumes that the \stakeescrow contract is aware of the gateways' stamps (or keys) that are used in signing the proof-of-unavailability. This can be done by either expanding the staker list in the contract to contain not only the Ethereum addresses of working Ursulas, but also their stamps. Another option is to piggyback the stamps (signed by using the key corresponding to the working Ursula's Ethereum address) with the proof-of-unavailability. A more simpler, and efficient, option is to sign the proof-of-unavailability by using the key corresponding to the working Ursula's Ethereum address in the first place, and thus, the \stakeescrow contract will not need an additional information. Which option to use depends merely on efficiency considerations. \\
+
+
+\noindent{\bf Quantifying the Financial Punishment or Slashing Value.}
+A question that comes to mind is how much should be revoked from Ursula's stake once a proof-of-unavailability is approved? Quantifying this amount should be driven by two factors; the unavailability duration and the utility gain (or profits) of this cheating behavior in terms of the collected fees and inflation rewards for that duration.
+
+
+Accordingly, we can compute this value to be equal to the fees and inflation rewards that an Ursula is supposed to receive in a round (recall that a round is the time needed to mine a block or several blocks on the blockchain). Hence, the working Ursula will, first, lose her fees and inflation rewards from the network, and second, lose the same amount from her stake. Such a loss will take place even if a single proof-of-unavailability is received against a working Ursula within a round. In fact, the \stakeescrow contract will process only one proof against a working Ursula per round to reduce computational costs in the system. \\
+
+
+\noindent{\bf Working Only During the Challenge Phase.}
+A potential issue under the proposed optimistic scheme is that a working Ursula may operate only during the challenge phase. That is, she ignores any fresh request coming from Bob, and just replies afterwards when receiving the same request again (i.e., when it is forwarded by the gateways during the challenge phase). 
+
+
+We argue that such a behavior is not a practical issue since a rational Ursula will be online eitherway to monitor whether this is a challenge phase or not, and that the amount of work needed to respond to a re-encryption request is minimal. Hence, there is no incentive at all to follow this strategy, meaning that a rational Ursula will act honestly. \\
+
+
+\noindent{\bf DoS Attacks.} 
+Another potential issue is exploiting the unavailability complaints to perform a DoS attack against the gateways and working Ursulas. In detail, Bob may lie and issue complaints against working Ursulas even though they are responsive just to slash their stakes. Or an attacker may replay these complaints, or issue them on behalf of Bob, to slash a working Ursula. Or the goal could be to overwhelm the gateways with the challenge process and make them unavailable to perform the re-encryption service (recall that the gateways are originally working Ursulas in the NuCypher network).
+
+
+This issues can be handled using a collection of techniques as follows:
+\begin{itemize}
+\item Require Bob to sign all the complaints (so no one can impersonate Bob unless they know his signing key), and include a timestamp or a sequence number in each of them (to ensure freshness and prevent replay attacks).
+
+\item Increase the cost of issuing complaints. That is, require Bob to do some work in order to produce a valid complaint (in a similar way to proof-of-work, i.e., produce a hash over the complaint with specific number of leading zeros).
+\end{itemize}
+
+
+\noindent{\bf Unresponsive Gateways.}
+A third issue that we may encounter in the proposed solution is that the gateways themselves could be unresponsive. This will stall the challenge phase and make it infeasible to prove that some working Ursula is unavailable. We believe that such an issue will be organically handled by the network. That is, the larger the number of Ursulas in the network, the higher the chances of having more honest Ursulas. By increasing the number of selected gateways $n$, and given that the selection process is random, the chances of having at least $t$ honest gateways in a round will be high.
+
+
+Another mechanism is to incentivize the gateways to do the work in the form of a small fee paid out of the revoked stake.
+
+
+It could be the case that all gateways in a round are responsive (although we believe that the probability this happens is very low). In this case, it could be viable to perform the challenge phase in a recursive way. In other words, Bob can send an unavailability complaint against the gateways of the current round to the gateways of the previous round. The previous round gateways will in turn challenge the current round gateways by forwarding Bob's complaint to them and sign a proof-of-unavailability if no response is received. 
+
