@@ -16,6 +16,19 @@
 *.cb2
 .*.lb
 
+*/*.aux
+*/*.lof
+*/*.log
+*/*.lot
+*/*.fls
+*/*.out
+*/*.toc
+*/*.fmt
+*/*.fot
+*/*.cb
+*/*.cb2
+*/.*.lb
+
 ## Intermediate documents:
 *.dvi
 *.xdv
@@ -36,6 +49,13 @@
 *-blx.bib
 *.run.xml
 
+*/*.bbl
+*/*.bcf
+*/*.blg
+*/*-blx.aux
+*/*-blx.bib
+*/*.run.xml
+
 ## Build tool auxiliary files:
 *.fdb_latexmk
 *.synctex
@@ -43,6 +63,13 @@
 *.synctex.gz
 *.synctex.gz(busy)
 *.pdfsync
+
+*/*.fdb_latexmk
+*/*.synctex
+*/*.synctex(busy)
+*/*.synctex.gz
+*/*.synctex.gz(busy)
+*/*.pdfsync
 
 ## Build tool directories for auxiliary files
 # latexrun
