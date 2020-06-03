@@ -4,6 +4,9 @@ This repository contains proposed solutions for the confirm activity problem in 
 
 This work considers two definitions of the problem: confirm availability and confirm service activity. The former is about confirming that each Ursula is indeed online and willing to serve Bob requests, while the latter is about confirming that Ursula served a distinct number of requests withing a given period. Such definitions arise due to the difference in requirements of the different stages of the network operations. During the initial stage, while service fees still exist, confirm availability is what we are after to increase adoption. At a later stage, when the only income source is service fees, we think that confirm service activity is what we need.
 
+## Repo Organization
+confirm-activity/ contains the full research work on the confirm activity problem, while CESC-submission/ contains the paper submitted to CESC 2020.
+
 
 ## Current Work
 Several solutions are proposed that vary based on the problem they solve, threat model, and efficiency. The first one is for confirm availability, while the rest are for confirm service activity.
