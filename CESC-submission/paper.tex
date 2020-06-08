@@ -264,7 +264,18 @@ As long as Ursula is behaving well and no valid complaints from Bob, this Ursula
 \paragraph{Confirm service activity solutions.} Here we have three solutions that differ in their security assumptions and efficiency. We refer to them as zero knowledge proof-based (ZKP-based), committee-attestation, and commit/challenge/open-based. Again, we provide a high level description in what follows while a more complete version can be found in~\cite{confirm-activity-draft}. 
 
 
-For the \emph{ZKP-based} solution, in the NuCypher network, each Ursula produces a zero knowledge proof attesting to the correctness of the re-encryption she performed to be checked by Bob~\cite{umbral2018}. We can combine the proofs of all served requests within a round into one attesting to the following statement: \emph{``An Ursula has served $\omega$ distinct requests correctly"} for some positive integer $\omega$ representing the number of served requests. This accumulation can be done by using generic techniques like proof carrying data (PCD)~\cite{chiesa2010proof} or incrementally verifiable computation (IVC)~\cite{valiant08}.
+For the \emph{ZKP-based} solution, in the NuCypher network, each Ursula produces a zero knowledge proof attesting to the correctness of the re-encryption she performed to be checked by Bob~\cite{umbral2018}. We can combine the proofs of all served requests within a round into one attesting to the following statement: \emph{``An Ursula has served $\omega$ distinct requests correctly"} for some positive integer $\omega$ representing the number of served requests. This accumulation can be done by using generic techniques like proof carrying data (PCD)~\cite{chiesa2010proof} or incrementally verifiable computation (IVC)~\cite{valiant08}. Figure~\ref{pcd-based-sol} for a high level diagram describing this solution (here $x_i$ is the $i^{th}$ request coming from Bob, $cFarg_i$ is the fragment of the transformed ciphertext (the reply for the re-encryption service request), $\pi_i$ is the correctness proof for handling this request, and $\hat{\pi}_i$ is the aggregated proof covering all proofs for requests $1, \dots, i$.
+
+
+\begin{figure}[t!]
+\centerline{
+\includegraphics[height= 0.7in, width = 1.0\columnwidth]{figures/pcd-based-sol.pdf}}
+\caption{PCD/IVC-based solution diagram. Ursula starts a round in the idle state. When 
+the first request arrives, Ursula responds to the request and starts composing the 
+proofs as new requests arrive. At the end of the round, Ursula announces the number of 
+served requests and a single proof attesting to its claim to the network. }
+\label{pcd-based-sol}
+\end{figure}
 
 
 An alternative, possibly more efficient approach, is to view the statement \emph{``An Ursula has served $\omega$ distinct requests correctly"} as an instance of the arithmetic circuit satisfiability problem and utilize bulletproofs\footnote{Bulletproofs are a highly efficient ZKP system that does not require any trusted setup.} to prove its correctness in zero knowledge~\cite{bunz18}. That is, build a circuit that takes the set of correctness proofs of the served requests as well as their number $\omega$ as inputs, and then output 0 if number of correct distinct proofs equals to $\omega$. Then, invoke a circuit parser to convert the circuit into the bulletproof format, which allow the prover, Ursula in this case, to produce a single proof. Then, Ursula submits the proof to the service policy contract. Once the proof is verified, the contract disperses the service fee (in proportion to $\omega$) from Alice's escrow to Ursula's account.
