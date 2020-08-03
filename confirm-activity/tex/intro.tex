@@ -1,150 +1,68 @@
 \section{Introduction}
 \label{intro}
-The NuCypher network~\cite{nucypher,egorov2017nucypher} is a decentralized key management 
-system, encryption, and access control service. It uses threshold proxy re-encryption, namely, the 
-Umbral scheme~\cite{umbral2018}, to delegate access to encrypted 
-documents through a public network. This network is composed of a set of semi-trusted 
-re-encryption service-providers, or Ursulas, that implement access control policies created by data 
+The NuCypher network~\cite{nucypher,egorov2017nucypher} is a decentralized key management system, encryption, and access control service. It uses threshold proxy re-encryption, namely, the Umbral scheme~\cite{umbral2018}, to delegate access to encrypted data through a public network. This network is composed of semi-trusted re-encryption service-providers, or Ursulas, that implement access control policies created by data 
 owners, or Alices. Alice supplies each Ursula with re-encryption keys allowing a quorum of Ursulas to transform 
-ciphertexts encrypted under Alice's public key into ciphertexts encrypted under the delegatee's, or Bob's,
-public key. This enables the latter to decrypt the ciphertext without revealing anything about the
-decryption keys or the raw data to the intermediate service-providers. 
+ciphertexts encrypted under Alice's public key into ciphertexts encrypted under the delegatee's, or Bob's, public key. This enables the latter to decrypt the ciphertext without revealing anything about the decryption keys or the raw data to the intermediate service-providers. 
 
 
-Joining the NuCypher network is governed by consensus rules defining the service setup
-and the monetary incentives paid to provide the service. In order to join the 
-system, Ursula needs to stake an amount of NU tokens (the native token of the network) for a specific period
-which will be released when the pre-specified staking period is over. Alice chooses an
-Ursula to hold an access control policy with a probability proportional to the stake this Ursula 
-pledged in the system. Therefore, the stake value influences the service load an Ursula
-may receive. This stake is also used to punish Ursula financially, by forfeiting part 
-of it for detectable malfeasance. 
+Joining the NuCypher network is governed by consensus rules defining the service setup and the monetary incentives paid to provide the service. In order to join the system, Ursula needs to stake an amount of NU tokens (the native token of the network) for a specific period which will be released when the pre-specified staking period is over. Alice chooses an Ursula to hold an access control policy with a probability proportional to the stake this Ursula pledged in the system. Therefore, the stake value influences the service load an Ursula may receive. This stake is also used to punish Ursula financially, by forfeiting part of it for detectable malfeasance. 
 
 
-Alice uses the network by creating a policy to be implemented by a 
-set of Ursulas. This policy specifies the re-encryption key fragments each Ursula will
-need to answer requests coming from Bob(s), as well as the duration of the policy, which 
-is basically the timeframe during which Bob is authorized to access Alice's data.  Furthermore,
-Alice will lock an amount of Ether into the policy contract to be used to pay Ursulas for the re-encryption 
-service. As noted, Alice is not exposed to the NU token. All that she needs is an Ethereum
-wallet, awareness of the NuCypher network architecture to select Ursulas, and knowledge of the
-NuCypher rules of preparing access control policies.
+Alice uses the network by creating an access control policy to be implemented by a set of Ursulas. This policy specifies the re-encryption key fragments each Ursula will need to answer requests coming from Bob(s), as well as the duration of the policy, which is basically the timeframe during which Bob is authorized to access Alice's data. Furthermore, the policy contract requires Alice to lock an amount of Ether that will be used by the network to pay Ursulas for providing the re-encryption service. As noted, Alice is not exposed to the NU token. All that she needs is an Ethereum wallet, awareness of the NuCypher network architecture to select Ursulas, and knowledge of the NuCypher rules with respect to preparing access control policies.
 
 
-Bob, on the other hand, does not deal with currency in the system at all. He interacts with the storage 
-network to retrieve the encrypted data, and with Ursulas in the NuCypher network to request the
-re-encryption service.
+Bob, on the other hand, does not deal with currency in the system at all. He interacts with the storage network to retrieve the encrypted data, and with Ursulas in the NuCypher network to request the re-encryption service after which he will be able to access the raw data of interest.
 
 
-\subsection{Monetary Incentives in the NuCypher Network}
-Ursulas are rewarded for their re-encryption service by using two sources; the first is the service fees collected from the policy owner Alice, while the second is a subsidy in the form of newly minted NU tokens distributed on a schedule enforced by the NuCypher protocol. The latter will be provided during the early stage of the network operation to encourage service-provider participation and sustain their operations in lieu of a mature fee market.
+\paragraph{\bf Rewards and activity monitoring in the NuCypher network.}
+Ursulas are rewarded for their re-encryption service by using two sources; the first is the service fees collected from the policy owner Alice, while the second is a subsidy in the form of newly minted NU tokens distributed on a schedule enforced by the NuCypher protocol. The latter will be provided during the early stage of the network operation to encourage Ursula's participation and sustain their operations in lieu of a mature fee market.
 
 
-Currently, the subsidy size in each round or period is computed for each Ursula based on the size of her stake and duration of commitment to the network, and provided that she confirms to be online during this round. Confirming the status of being online is done by calling a simple function in one of the NuCypher contracts, which is like a signal that the calling Ursula is online. Similarly, for fees, Ursula collects part of the Ether locked by Alice during the policy's duration in proportion to the number of periods up to that point in which Ursula has confirmed her online status.
+Currently, the subsidy size in each round or period is computed for each Ursula based on the size of her stake and duration of commitment to the network, and provided that she confirms to be online during this round. Confirming the status of being online is done by calling a simple function in one of the NuCypher contracts, which is like a signal that the calling Ursula is online. Similarly, for service fees, Ursula collects part of the Ether locked by Alice during the policy's duration in proportion to the number of periods up to that point in which Ursula has confirmed her online status.
 
 
-\subsection{Problems with Current Reward Computation Approach}
-Although rewards computation and activity monitoring are reasonable for the first iteration of the network, we acknowledge that it suffers from two main problems:
+\paragraph{\bf Motivation.} Although rewards computation and activity monitoring are reasonable for the first iteration of the network, we acknowledge that it suffers from two main problems:
 \begin{itemize}
 \setlength{\itemsep}{0pt}
 \item The revenue computation (both fees and subsidy) is agnostic to the number of requests Ursula serves. Thus, an active Ursula who may serve a huge number of re-encryption requests, and one who does not receive any requests (or more importantly, a malicious/lazy Ursula that does not answer Bob's requests), will both collect the same amount of revenue if they hold identical policies.
 
-\item Confirming being online is flawed in the sense that this function does not require any input or proofs from Ursula on providing the service. Ursula can stay offline the majority of the time and not respond to Bobs' requests, then come online merely to call the confirm activity function. This allows Ursula to collect both subsidy and fees without doing all (or even most) of the necessary work. Even worse, Ursula will be able to get her stake back once it unlocks.
+\item Confirming being online is flawed in the sense that the function call that Ursula makes does not require any input or proofs on providing the service, or even being online and responsive. Ursula can stay offline the majority of the time and not respond to Bobs' requests, then come online merely to call this function. This allows Ursula to collect both subsidy and fees without doing all (or even most) of the necessary work. Even worse, Ursula will be able to get her stake back once it unlocks.
 \end{itemize}
 
-Therefore, we need to devise a secure, non-gameable technique that confirms Ursula's availability and service activity. Then we need to adapt the subsidy and fee computation accordingly to factor in the amount of delivered service, and potentially punish Ursulas if it is insufficient. We introduce these topics in the remainder of the section. 
+Therefore, we need to devise a secure, non-gameable technique that confirms Ursula's availability and service activity. Then we need to adapt the subsidy and fee computation accordingly to factor in the amount of delivered service, and potentially punish Ursulas if it is insufficient. 
 
 
-\subsection{Problem Statement}
-The confirm activity problem is defined differently based on the stage of the network operation. In the first 5 to 8 years after launch, when subsidy rewards are 
-still distributed, we are concerned with the availability of Ursulas and their willingness to 
-serve all requests coming from Bob. In other words, regardless of the number of requests served, the revenue total value (both subsidy and fees) will be computed based on the length of time during which Ursula 
-is online and well-behaved. In later stages, when subsidies disappear 
-and the only revenue comes from fees, confirm activity will be tied to providing the re-encryption 
-service, in the sense that the payment will be partially computed based on the amount of 
-service provided. This requires Ursula to confirm its activity by proving that she served 
-a given number of distinct re-encryption requests during a given period. To make the distinction 
-clear, we refer to the first as \emph{confirm availability}, and for the second as \emph{confirm 
-service activity}.
+\paragraph{\bf Problem statement.}
+The confirm activity problem is defined differently based on the network operation stage. In the first 5 to 8 years after launch, when subsidy rewards are still distributed, we are concerned with the availability of Ursulas and their willingness to serve all requests coming from Bob. In other words, regardless of the number of requests served, the revenue total value (both subsidy and fees) will be computed based on the length of time during which Ursula is online and well-behaved. 
 
 
-In this document, we introduce several solutions for both forms of confirming activity. 
-These solutions differ in the trust, efficiency, interactivity, and resource 
-requirements, in addition to their security guarantees. We divide the document into 
-two parts, the first is about confirm availability, while the second is about confirm 
-service activity. We begin with outlining the adopted threat model for each problem 
-definition, as well as the network model. Then, we present the proposed solutions, discuss the aforementioned
-trade-offs and requirements of each of them, with the goal of selecting one of these 
-solutions to be adopted for each stage of the NuCypher network operation.
+On the other hand, in later stages, when subsidies disappear and the only revenue comes from fees, confirm activity will be tied to providing the re-encryption service, in the sense that the payment will be partially computed based on the amount of service provided. This requires Ursula to confirm its activity by proving that she served a given number of distinct re-encryption requests during a given period. 
 
 
-\subsection{Threat and Network Models}
-\label{threat-network-model}
-This section describes a modification for the network model of NuCypher 
-required by the proposed solutions, in 
-addition to the threat model adopted in this work.
+To make the distinction clear, we refer to the first as \emph{confirm availability}, and for the second as \emph{confirm service activity}.
 
 
-\subsubsection{Network Model.}
-In order for the proposed solutions to work, we need to ensure freshness, 
-integrity, and authenticity of the requests (as well as service complaints as we will see later) issued by Bob. This can be achieved 
-by requiring Bob to sign each re-encryption request it issues and to include a timestamp, or 
-sequence number, in each request to ensure freshness. The keypair used for the 
-signature should be separate from the keypair Bob uses for proxy encryption in the 
-system. 
+\paragraph{\bf Contributions.}
+In this document, we introduce several solutions for both forms of confirming activity. These solutions differ in the trust, security guarantees, interactivity, and efficiency. 
 
 
-Until now we assume that Alice pays for the service by using the Ether she locks 
-in the policy contract. Other arrangement may emerge in the system like having 
-Bob pay for each requests he issues. Such an arrangement and its implication on the 
-confirm activity issue will be studied once it becomes part of the NuCypher 
-network protocol.
+For confirming availability, we employ a detect-and-punish approach embedded within an optimistic service monitoring process. This means that it is only invoked when Bob complains that an Ursula is unresponsive. The proposed solution labels Ursulas as working and gateway Ursulas. The former are contacted in a regular way to handle the re-encryption service, while the latter act as challengers that are contacted only when there is a complaint from Bob so they will attest whether a working Ursula is indeed unavailable. If that is the case, a quorum of gateways (who have challenged the working Ursula and found her unresponsive) will collectively sign a proof-of-unavailability that will cost the misbehaving working Ursula part of her stake. We discuss several aspects related to gateway selection and a variety of potential attacks on this approach along with mitigation techniques.
 
 
-\subsubsection{Threat Model.}
-In our threat model, we make the following set of assumptions:
-\begin{itemize}
-\item {\bf Self-interested parties:} We do not place trust in any party and we assume that all participants are 
-self-interested. This means that a party may decide to 
-follow the protocol or deviate from it, either on its own or by colluding 
-with other attackers, and such decision is solely based on what maximizes the financial profits
-of this party.
-
-\item {\bf Attackers' collusion:} If it is profitable, an Ursula may, for example, spin out  
-its own Alice and/or Bob or collude with Alice. We do not consider collusion 
-between Bob and Ursula as a practical threat. This means that cases of Bob pretending  
-that he got service from Ursula (while no service is delivered) is not an issue. We do not 
-suspect this will be of any importance and there is no motivation to do it given that 
-the work Ursula does for re-encryption is minimal.
-
-The above non-collusion assumption does not affect the solutions proposed to handle 
-the confirm service activity discussed in Section~\ref{confirm-service-activity}. This 
-means that these solutions provide higher 
-security guarantees and address the issue of potential collusion between Bob and Ursula. 
-It could be the case that relaxing the requirement of 
-addressing this collusion case allows deploying more efficient solutions. 
-In order to make an educated decision of the plausibility of this threat, we need 
-more data about the system operation and the behavior of the participants 
-once the inflation rewards disappears in the system. Therefore, we leave this 
-issue until later when fees become the only source of rewards for Ursulas.
-
-\item {\bf Honest Ursulas:} We also assume that when sampling a subset of Ursulas in the network, 
-at least one of them is honest. This assumption can be achieved by 
-having a global assumption regarding the lower bound of the number of 
-honest Ursulas with respect to the total number of Ursulas in the system. 
-(Or it can be achieved by deploying a special entity like an external verifier, 
-that changes on a periodic basis, or one by the NuCypher company, that is
-trusted to faithfully participate as a member of each samples set. This 
-verifier does not provide any other services 
-in the system.)
-\end{itemize}
+For confirming service activity, we devise three solutions that allow producing a proof attesting to the statement \emph{``An Ursula has served $\omega$ distinct requests correctly"} for some positive integer $\omega$ representing the number of served requests. These solutions are refereed to as zero knowledge proof-based (ZKP-based), committee-attestation, and commit/challenge/open-based. 
 
 
-Other than the above, we have usual assumptions like dealing with 
-computationally bounded adversaries 
-that cannot break secure cryptographic primitives with non-negligible probability. 
-(We may need to work in the random oracle model, but this depends on the 
-security requirements of the proposed solutions.)
+For the \emph{ZKP-based} approach, we utilize the fact that in our network each Ursula already produces a ZKP attesting to the correctness of each re-encryption request she performs~\cite{umbral2018}. Our solution is to aggregate the proofs of all served requests within a round into one proof attesting to the above statement. This accumulation can be done by using generic techniques like proof carrying data (PCD)~\cite{chiesa2010proof} or incrementally verifiable computation (IVC)~\cite{valiant08}. An alternative, possibly more efficient approach, is to view the above statement as an instance of arithmetic circuit satisfiability problem and combine it a highly efficient ZKP system, e.g.,~\cite{bunz18}. That is, build a circuit that takes the set of correctness proofs and their count $\omega$ as inputs. If the number of correct distinct proofs equals to $\omega$, i.e., the circuit output 1,  then a valid proof will be produced. Ursula can submit this proof to the network to claim her payments. 
 
 
+As for the \emph{committee-attestation} approach, it shares a similar theme to confirm availability solution mentioned previously. For each round, a committee of Ursulas (and possibly outsider verifiers) is elected to attest for the work load an Ursula served. In detail, the working Ursula sends all Bob requests she served along with the correctness proofs to this committee. After verifying all the proofs, the committee collectively signs the \emph{``An Ursula has served $\omega$ distinct requests correctly"} statement, while replacing $\omega$ with the actual number of served requests. The committee (or the working Ursula) submits the signed statement to the network so the working Ursula can claim her payments.
 
+
+For the \emph{commit/challenge/open} approach, we introduce a mechanism inspired from the Merkle tree-based ZKP system proposed in~\cite{dottling19}. For each round a working Ursula constructs a Merkle hash tree of all served requests and their correctness proofs. Then, she uses the root as a random beacon to be fed into an iterative hash process to select $n$ leaf nodes at random to open them (i.e., these are the challenges). Ursula signs the Merkle tree root and the activity proof will be composed of the signed root, the challenge leaf nodes along with their openings, and membership paths of the challenge leaves. Ursula sends this proof to either a sidechain (maintained by round-selected committee) or to the main network to verify. Once verified, Ursula will be rewarded with the service payment.
+
+
+Lastly, we discuss the trade-offs of each of these solutions in terms of security guarantees, assumptions, and efficiency. We also outline some recommendations regarding which solution should be used at what stage of the network operation. 
+
+
+\paragraph{\bf Organization.}
+We begin with outlining the adopted threat and network model, in Section~\ref{threat-network-model}, followed by an overview of some of the cryptographic primitives that we use in Section~\ref{prelim}. Then, we present the proposed solutions for confirm availability in Section~\ref{confirm-availability} and those for confirming service activity in Section~\ref{confirm-service-activity}. After that, we briefly discuss the trade-offs and requirements of each of these solutions along with some usage recommendations in Section~\ref{discussion}. Lastly, in Section~\ref{future-work} we conclude with highlighting some of our future work directions.
