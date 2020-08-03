@@ -24,9 +24,9 @@ Currently, the subsidy size in each round or period is computed for each Ursula 
 \paragraph{\bf Motivation.} Although rewards computation and activity monitoring are reasonable for the first iteration of the network, we acknowledge that it suffers from two main problems:
 \begin{itemize}
 \setlength{\itemsep}{0pt}
-\item The revenue computation (both fees and subsidy) is agnostic to the number of requests Ursula serves. Thus, an active Ursula who may serve a huge number of re-encryption requests, and one who does not receive any requests (or more importantly, a malicious/lazy Ursula that does not answer Bob's requests), will both collect the same amount of revenue if they hold identical policies.
-
 \item Confirming being online is flawed in the sense that the function call that Ursula makes does not require any input or proofs on providing the service, or even being online and responsive. Ursula can stay offline the majority of the time and not respond to Bobs' requests, then come online merely to call this function. This allows Ursula to collect both subsidy and fees without doing all (or even most) of the necessary work. Even worse, Ursula will be able to get her stake back once it unlocks.
+
+\item The revenue computation (both fees and subsidy) is agnostic to the number of requests Ursula serves. Thus, an active Ursula who may serve a huge number of re-encryption requests, and one who does not receive any requests (or more importantly, a malicious/lazy Ursula that does not answer Bob's requests), will both collect the same amount of revenue if they hold identical policies.
 \end{itemize}
 
 Therefore, we need to devise a secure, non-gameable technique that confirms Ursula's availability and service activity. Then we need to adapt the subsidy and fee computation accordingly to factor in the amount of delivered service, and potentially punish Ursulas if it is insufficient. 
