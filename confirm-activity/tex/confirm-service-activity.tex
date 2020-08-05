@@ -1,85 +1,72 @@
 \section{Confirm Service Activity Solutions}
 \label{confirm-service-activity}
-In this section, we present potential solutions for the confirm service activity problem. The goal is to come up with provably secure solutions that allows an Ursula to prove that it has served a given number of distinct re-encryption requests within a given period. 
-
-
-The rest of this section discusses the proposed solutions along with an analysis of their security and efficiency aspects. Lastly, the section concludes with directions of future work on the confirm service activity issue.
+As discussed previously, for confirm service activity we need secure solutions that allow an Ursula to prove that she has served a given number of distinct re-encryption requests within a given period. In particular, for every round an Ursula will need to produce a proof attesting to the statement ``Ursula has served $\omega$ distinct re-encryption requests correctly," for some positive integer $\omega$. In this section, we present three solutions to achieve this goal, which we refer to as zero knowledge proof-based (ZKP-based), committee-attestation, and commit/challenge/open-based. These solutions differ in their security assumptions, guarantees, proof technique, and efficiency. In what follows, we provide the design details of each of them.
 
 
 \subsection{ZKP-based Scheme}
-The main idea here is to adapt the PCD framework so that Ursula can combine the correctness proofs she computes for Bobs' requests in a single proof attesting to the following fact: ``Ursula has served $\omega$ distinct re-encryption requests correctly." 
+In this solution, we utilize the fact that in the NuCypher network each Ursula already produces a ZKP attesting to the correctness of each re-encryption request she performs to be checked by Bob~\cite{umbral2018}. Such proofs can be aggregated into a single proof attesting to the statement outlined above. This accumulation can be done using two approaches: by using generic techniques like proof carrying data (PCD)~\cite{chiesa2010proof} or incrementally verifiable computation (IVC)~\cite{valiant08}, or by using a ZKP system for arithmetic circuits. 
 
 
-Thus, in this setup, there is only one computation party, or prover, namely, Ursula. For each round, where a round could be the time needed to mine a block on the blockchain, Ursula starts with input $x_1$, which is a signed and fresh requestfrom Bob. It answers this request with $cFrag_{x_1}$ and produces a correctness proof $\pi_1$ as defined in the Umbral scheme, in addition to another correctness proof $\hat{\pi}_1$ that will be used in the PCD composition. Then, when the next request $x_2$ arrives, which is the input for the next step in the computation, Ursula answers this request as before and produces $cFrag_{x_2}$ and a correctness proof $\pi_2$, then it uses $(x_2, cFrag_{x_2}, \pi_2)$ and the previous proof $\hat{\pi}_1$ to produce $\hat{\pi}_2$. $\hat{\pi}_2$ does not only attest to the correctness of $cFrag_{x_2}$, but also attests to the fact that Ursula has served two valid distinct requests until now. The same process is repeated until the end of the round to produce a single proof $\hat{\pi}_{\omega}$ along with the number of served requests $\omega$. Figure~\ref{pcd-based-sol} depicts 
-this process pictorially.
+For the generic PCD/IVC approach, we have only one prover or computation party, namely, Ursula. For each round, Ursula starts with input $x_1$, which is a signed and fresh re-encryption request from Bob. It answers this request with a ciphertext fragment $cFrag_{x_1}$ and produces a correctness proof $\pi_1$ as defined in the Umbral scheme~\cite{umbral2018}. Then, when the next request $x_2$ arrives, which is the input for the next step in the computation, Ursula answers this request as before and produces $cFrag_{x_2}$ and a correctness proof $\pi_2$, then it uses $(x_2, cFrag_{x_2}, \pi_2)$ and the previous proof $\pi_1$ to produce $\hat{\pi}_2$. $\hat{\pi}_2$ does not only attest to the correctness of $cFrag_{x_2}$, but also attests to the fact that Ursula has served two valid distinct requests until now. The same process is repeated until all requests served in a round are covered. At the end, Ursula produces a single proof $\hat{\pi}_{\omega}$ along with the number of served requests $\omega$ as the final proof. Figure~\ref{pcd-based-sol} depicts this process pictorially.
 
 
 \begin{figure}[h!]
 \centerline{
-\includegraphics[height= 0.7in, width = 1.0\columnwidth]{figures/pcd-based-sol.pdf}}
-\caption{PCD-based solution diagram. Ursula starts a round in the idle state. When the first request arrives, Ursula responds to the request and starts composing the proofs as new requests arrive. At the end of the round, Ursula announces the number of served requests and a single proof attesting to its claim to the network. }
+\includegraphics[height= 2.5in, width = 1.0\columnwidth]{figures/pcd-based-sol.pdf}}
+\caption{PCD-based solution diagram. Ursula starts a round in the idle state. When the first request arrives, Ursula responds to the request and starts composing the proofs as new requests arrive. At the end of the round, Ursula informs the network (i.e., verifier) of the number of served requests and a single proof attesting to her claim. }
 \label{pcd-based-sol}
 \end{figure}
 
 
-The final proof will be processed by the contract that governs Alice's policy. A valid proof allows Ursula to claim fees out of Alice's Ether escrow as a payment for $\omega$ re-encryption  requests. 
+An alternative, possibly more efficient approach, is to view the statement ``Ursula has served $\omega$ distinct re-encryption requests correctly" as an instance of the arithmetic circuit satisfiability problem and utilize a highly efficient ZKP system, e.g., Bulletproofs~\cite{bunz18}, to prove its correctness in zero knowledge. That is, build a circuit that takes the set of correctness proofs of the served requests as well as their number $\omega$ as inputs, and then output 1 if number of correct distinct proofs equals to $\omega$. Then, invoke a circuit parser~\cite{bunz18} to convert the circuit into the Bulletproof format, which allow the prover, Ursula in this case, to produce a single proof. 
 
 
-The above is a high level description of the idea. However, more time is need to understand PCD and SNARKs in order to come up with a concrete construction (if possible). Please see Section~\ref{future-work} for more information.
+In both cases, Ursula submits a single proof to the service policy contract. Once the proof is verified, the contract disperses the service fee (in proportion to $\omega$) from Alice's locked Ether to Ursula's account.
 
 
-\subsection{CoSi-based Scheme}
-This solution utilizes the idea of collective signing by electing a committee that will sign a report submitted by a specific Ursula after verifying that the report supports the claim that ``Ursula has served $\omega$ distinct re-encryption requests correctly." 
+\subsection{Committee-Attestation Scheme}
+This solution shares a similar theme to confirm availability solution discussed previously. It relies on electing a committee for each round that will endorse Ursula's claim of serving $\omega$ distinct and valid re-encryption requests in a given round. The endorsement is done by employing CoSi (see Section~\ref{cosi}) to permit the committee to collectively sign the statement ``Ursula has served $\omega$ distinct re-encryption requests correctly."  
 
 
-At a high level, the scheme works as follows. For each round, a working Ursula keeps a full record of all the requests that she served during the round. These include the signed requests received from Bob(s), and the produced $cFrag$ and the correctness proof $\pi$ (as in the Umbral scheme) for each request. At the end of the round, a committee of $t$ Ursulas is elected, where $t$ is a small integer, e.g., $t = 5$. The working Ursula 
-initiates the CoSi protocol to sign the message $m$ stated above while replacing $\omega$ with the actual number of served requests in the round. This Ursula sends $m$ along with the full report to each member in the committee. Each member Ursula (i.e., member in the elected committee) verifies $m$ by checking the report as follows:
+In detail, for each round, a committee of Ursulas (and possibly outsider verifiers) is elected to attest for the work load an Ursula served. At the end of a round, each working Ursula establishes a record of all the requests she served along with their individual correctness proofs and the ciphertext fragments she computed. Then, she initiates the CoSi protocol to sign the workload statement above, denoted as $m$, while replacing $\omega$ with the actual number of served requests in the round. Ursula sends $m$ along with the full service record to each member of the committee, which in turn verfiies the correctness of the report as follows: 
+
 \begin{enumerate}
-\setlength{\itemsep}{0pt}
-\item Check that each request is distinct by checking the sequence number of the request (or any value that is used for freshaness), and valid by verifying Bob's signature over the request. (Here the policy will contain Bob's public key to allow the committee use the right verification key.)
+\item Check that each request is distinct by checking the sequence number/timestamp of the request.
 
+\item Check that each request is valid by verifying Bob's signature over the request. (Here the policy will contain Bob's public key to allow the committee to use the right verification key.)
 
-\item Verify the correctness of each $cFrag$ as in the Umbral scheme.
+\item Verify the ZKP correctness proof of each $cFrag$ as in the Umbral scheme.
 
 \item Check that the value of $\omega$ inside $m$ agrees with the record.
 \end{enumerate}
 
 
-If everything is fine, each member of the committee and the working Ursula finalize the CoSi signing protocol as described in Section~\ref{cosi}. At the end, the working Ursula publishes the collective signature, which can be verified using the accumulated public keys of the cosigning Ursulas.
+If everything is fine, each member of the committee and the working Ursula finalize the CoSi signing protocol and produce one signature over $m$. At the end, the working Ursula publishes $m$ and the collective signature to the network, or the service policy contracts, which in turn verifies correctness as described in Section~\ref{cosi}.
 
 
 \paragraph{\bf On the committee election.} 
-This can be done by using some deterministic computation over a block hash and mapping the output to Ursulas' public keys. So the selection is not determined by the working Ursula to prevent any potential collusion. The selection may also take into account the presence and size of each Ursula's stake, to avoid an attacker spinning up enormous numbers of Ursulas in order to increase the chance of them controlling the entire committee.
+For each round some reasonable number of Ursulas will be elected by using a similar technique to the ones described in Section~\ref{confirm-availability}, i.e., using the hash iterative process. The selection may also take into account the presence and size of each Ursula's stake, to avoid an attacker spinning up enormous numbers of Ursulas in order to increase the chance of them controlling the entire committee.
 
 
-The above scheme works under the assumption that at least one Ursula in the elected committee is honest, which pertains to an assumption on the least number of honest Ursulas in the network. If the latter assumption is under threat, one mitigating approach is to increase $t$ (the committee size).
+The above scheme works under the assumption that at least one Ursula in the elected committee is honest, which pertains to an assumption on the least number of honest Ursulas in the network. If the latter assumption is under threat, one mitigating approach is to increase the committee size. Another approach is to have a changing set of external verifiers, like trusted partners, as part of the elected committee. As long as there is one honest party in the committee, signing fraudulent records will not succeed since this honest party will not agree to do that.
 
 
-Another approach is to have a changing set of external verifiers, like trusted partners, that all working Ursulas must use for the CoSi signing of their records.
-
-
-A third approach is to keep the deterministic selection of the committee but with an external member, e.g., either a trusted partner verifier or a special verifier node deployed and maintained by the NuCypher company. Thus, achieving the assumption of at least one member of the elected committee is honest.
-
-
-\paragraph{\bf On the publicity of the signed records.} 
-Having a valid collective signature from a committee (that has at least one honest member) suffices for the correctness of the signed statement. However, it could be better to keep the records that produced the message $m$  available for a while so that any party can verify them (the verifying parties could maintain such a public record for a given period after which the logs can be discarded). 
-
-
-We can resort to this option just at the beginning to convince the participants of the trustworthiness of the committee or the validity of the assumption that at least one Ursula in the elected committee is honest.
+\paragraph{\bf On the public verifiability of the signed records.} 
+Having a valid collective signature from a committee (that has at least one honest member) suffices for the correctness of the signed statement. However, it could be better to keep the records that produced the message $m$ available for a while so that any party can verify them (the verifying parties could maintain such a public record for a given period after which the logs can be discarded). We can resort to this option just at the beginning to convince the participants of the trustworthiness of the committee or the validity of the assumption that at least one Ursula in the elected committee is honest. 
 
 
 \paragraph{\bf On compensating the committee.} 
-This solution may raise the question of why would the elected committee (especially if it is composed of other Ursulas in the system) participate in the CoSi process, which also involves verifying the full request record presented by the working Ursula. This can be pictured as a collaborative work, the committee does the work so that others will do the same when the committee members play the role of working Ursulas.
-
-
-Another option is to pay the committee for their work, either as part of the inflation rewards, or by having working Ursulas pay for it (however, this may complicate the system operation).
+Similar to confirm availability, we need a mechanism to ensure that the elected committee is responsive and willing to handle the endorsement work. Ideally, this can be pictured as a collaborative work, the committee does the work so that others will do the same when the committee members want their workload to be signed. Alternatively, and as mentioned before, the committee can be paid for their work, either by Alice as part of her policy, or by the working Ursulas themselves since they are requesting this endorsement service (however, the latter may complicate the system operation).
 
 
 \subsection{Commit/Challenge/Open-based Scheme}
-This solution utilizes the idea of commit/challenge/open protocols. In details, Ursula keeps track of the requests coming from Bob(s) during a time round and assign each of them a unique sequence number. That is, Ursula replies with $cFrag$ and the correctness proof along with a sequence number showing the order of the request within the batch of requests handled during a round. At the end of the round, Ursula constructs a Merkle tree of all requests, where the requests (and their replies) are the leaves of the tree ordered by the sequence numbers. Ursula signs the root of the tree, denoted as $root$ to produce a signature $\sigma_{root}$, then it publishes $(\omega, root, \sigma_{root})$ to the network (recall that $\omega$ is the number of served requests). 
+This solution is inspired from the Merkle tree-based ZKP system proposed in~\cite{dottling19}. Ursula keeps track of the requests coming from Bob(s) during a time round and assign each of them a unique sequence number. That is, Ursula replies with $cFrag$ and the correctness proof. At the end of the round, Ursula constructs a Merkle tree of all requests, where the requests (and their replies/correctness proofs) are the leaves of the tree ordered by their sequence numbers (recall that we require Bob to include a sequence number in his request to ensure freshness). Ursula signs the root of the tree, denoted as $root$ to produce a signature $\sigma_{root}$
 
 
-To prove correctness, Ursula will be challenged to open some leaves in the Merkle tree. This can be done by having the policy contract select at random (e.g. based on the block hash or any other mechanism) the leaf IDs to be opened. If Ursula fails to open them correctly within a predefined timeframe, she loses the whole fee she was supposed to collect for serving $\omega$ requests.
+To prove correctness of the claimed work amount, Ursula will be challenged to open some leaves in the Merkle tree. She uses the $root$ as a random beacon to be fed into an iterative hash process to select $n$ leaf nodes at random to open them (i.e., these are the challenges). Ursula provides the challenge leaf nodes along with their membership paths in the tree, along with $(\omega, root, \sigma_{root})$, either to a sidechain (which is maintained by round-elected committee) or to the policy contract to verify. 
 
 
-An alternative approach to the challenge/open scheme described above is to have Ursula publish the full Merkle tree on some known public space but not on the blockchain, and make the full record available online for a specific period to allow anyone to verify the work. If no one files a complaint about the tree (we still need to define correctness properties, like checking all Bob public keys are defined in the policy created by Alice, and that the response is valid by checking the proof produced by Umbral), Ursula collects the fees for the provided service. On the otherhand, a valid complaint or proof-of-cheating costs Ursula the full allocation of fees, or potentially involves slashing her stake.
+The verification process involves verifying Ursula's signature on the $root$, verifying the freshness and correctness of the request in each opened leaf, and verifying the membership path of each of these leaves. If everything is fine, Ursula will be paid for serving the claimed $\omega$ request.
+
+
+It should be noted that the security provided here is statistical, driven by the value of $n$, in the sense that we need to bound the probability by which an Ursula can cheat, such as replicating requests in the tree and adding fabricated ones to increase $\omega$. 

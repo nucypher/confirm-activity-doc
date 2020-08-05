@@ -1,4 +1,4 @@
-\section{Threat and Network Models}
+\section{Network and Threat Models}
 \label{threat-network-model}
 This section describes the network and threat models adopted by the proposed solutions. In particular, it introduces a modification for the network model of NuCypher, and it describes the security assumptions and attacker collusion cases considered in this work.
 
@@ -10,11 +10,12 @@ In order for the proposed solutions to work, we need to ensure freshness, integr
 \subsection{Threat Model}
 The goal of this document is to address accounting attacks, namely, holding Ursula accountable for the service it provides and for claiming being available and responsive. In addressing this type of attacks we adopt a threat model that makes the following set of assumptions:
 \begin{itemize}
-\item {\bf Self-interested parties:} We do not place trust in any party and we assume that all participants are 
+\setlength{\itemsep}{5pt}
+\item {\bf Self-interested parties.} We do not place trust in any party and we assume that all participants are 
 self-interested. This means that a party may decide to follow the protocol or deviate from it, either on its own or by colluding with other attackers, and such decision is solely based on what maximizes the financial profits
 of this party.
 
-\item {\bf Attackers' collusion:} If it is profitable, an Ursula may, for example, spin out her own Alice/Bob instances or collude with Alice or Bob. That is, by creating Alice/Bob instances (or colluding with them), Ursula will receive larger number of policies and re-encryption requests. Such a collusion case could be profitable if the subsidy size is influenced by the amount of service delivered. However, this is not the case in NuCypher as mentioned before. Thus, such a collusion scenario is not appealing to a rational Ursula. 
+\item {\bf Attackers' collusion.} If it is profitable, an Ursula may, for example, spin out her own Alice/Bob instances or collude with Alice or Bob. That is, by creating Alice/Bob instances (or colluding with them), Ursula will receive larger number of policies and re-encryption requests. Such a collusion case could be profitable if the subsidy size is influenced by the amount of service delivered. However, this is not the case in NuCypher as mentioned before. Thus, such a collusion scenario is not appealing to a rational Ursula. 
 
 
 Moreover, we do not consider collusion between Bob and Ursula as a practical threat. This means that cases of Bob pretending that he obtained service from Ursula (while no service has been delivered) is not an issue. We do not suspect this will be of any importance and there is no motivation to do it given that the work Ursula does for any re-encryption request is minimal (as we will see shortly, the ciphertext size is very small since it encrypts a symmetric key instead of the whole data).
@@ -23,10 +24,10 @@ Moreover, we do not consider collusion between Bob and Ursula as a practical thr
 We note that the above non-collusion assumption does not affect the solutions proposed to handle the confirm service activity  (Section~\ref{confirm-service-activity}). This means that these solutions provide stronger security guarantees than the confirm availability solution (Section~\ref{confirm-availability}), where they address the issue of potential collusion between Bob and Ursula. In order to make an educated decision of the plausibility of this threat, we need more data about the system operation and the behavior of the participants once subsidies stop in the system. 
 
 
-\item {\bf Honest Ursulas:} We also assume that when sampling a subset of Ursulas in the network, at least one of them is honest. This assumption can be achieved by having a global assumption regarding the lower bound of the number of honest Ursulas with respect to the total number of Ursulas in the NuCypher network. (Or it can be achieved by deploying a special entity like an external verifier, that changes on a periodic basis, or one by the NuCypher company, that is trusted to faithfully participate as a member of each samples set. This verifier does not provide any other services in the system.)
+\item {\bf Honest Ursulas.} We also assume that when sampling a subset of Ursulas in the network, at least one of them is honest. This assumption can be achieved by having a global assumption regarding the lower bound of the number of honest Ursulas with respect to the total number of Ursulas in the NuCypher network. (Or it can be achieved by deploying a special entity like an external verifier, that changes on a periodic basis, or one by the NuCypher company, that is trusted to faithfully participate as a member of each samples set. This verifier does not provide any other services in the system.)
 
 
-\item {\bf Efficient adversaries.}. We deal with computationally-bounded (or probabilistic polynomial time) adversaries that cannot break secure cryptographic primitives with non-negligible probability.
+\item {\bf Efficient adversaries.} We deal with computationally-bounded (or probabilistic polynomial time) adversaries that cannot break secure cryptographic primitives with non-negligible probability.
 \end{itemize}
 
 
